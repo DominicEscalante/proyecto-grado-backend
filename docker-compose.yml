@@ -1,0 +1,73 @@
+services:
+  # ===================================================
+  # Database Service: PostgreSQL + PostGIS Extension
+  # ===================================================
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: proyecto_grado_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-proyecto_grado_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-proyecto_grado_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # ===================================================
+  # Backend Service: Node.js / Express / TypeScript API
+  # ===================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: proyecto_grado_backend
+    restart: unless-stopped
+    environment:
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${NODE_ENV:-development}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-proyecto_grado_db}
+      DB_SSL: false
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-supersecretbetterauthkey_change_in_production_32chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-10}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/usr/src/app/uploads
+    networks:
+      - app-network
+
+# ===================================================
+# Persistent Volumes
+# ===================================================
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+# ===================================================
+# Internal Network
+# ===================================================
+networks:
+  app-network:
+    driver: bridge

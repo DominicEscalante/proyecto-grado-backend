@@ -1,0 +1,42 @@
+{
+  "name": "proyecto-grado-backend",
+  "version": "1.0.0",
+  "description": "Backend API REST en TypeScript para Sistema de Reportes Ciudadanos y Gestión Geoespacial",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "express",
+    "typescript",
+    "nodejs",
+    "better-auth",
+    "zod",
+    "postgresql",
+    "postgis",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-auth": "^1.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.8",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  }
+}
