@@ -37,3 +37,14 @@ Thumbs.db
 # Testing and Coverage
 coverage/
 .nyc_output/
+
+# AI Assistants, Agents & Skills
+.agents/
+agents/
+.gemini/
+gemini/
+GEMINI.md
+gemini.md
+.skills/
+skills/
+
