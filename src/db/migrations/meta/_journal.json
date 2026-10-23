@@ -8,6 +8,13 @@
       "when": 1791049415185,
       "tag": "0000_curly_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791646909301,
+      "tag": "0001_crazy_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

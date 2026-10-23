@@ -6,6 +6,7 @@ import {
   numeric,
   timestamp,
   integer,
+  boolean,
   geometry,
   index,
 } from 'drizzle-orm/pg-core';
@@ -25,12 +26,16 @@ export const reportes = pgTable(
     codigoTicket: varchar('codigo_ticket', { length: 20 }).notNull().unique(),
     descripcion: text('descripcion').notNull(),
 
+    // Institución de destino seleccionada por el ciudadano: 'POLICIA' | 'BOMBEROS'
+    institucionDestino: varchar('institucion_destino', { length: 20 }).notNull().default('POLICIA'),
+
     // Coordenadas Geoespaciales
     latitud: numeric('latitud', { precision: 10, scale: 7 }).notNull(),
     longitud: numeric('longitud', { precision: 10, scale: 7 }).notNull(),
     altitud: numeric('altitud', { precision: 7, scale: 2 }).notNull().default('0'),
     geom: geometry('geom', { type: 'point', mode: 'xy', srid: 4326 }).notNull(),
     referenciaDireccion: text('referencia_direccion').notNull(),
+    fueraJurisdiccion: boolean('fuera_jurisdiccion').notNull().default(false),
 
     // Ciclo de vida y Estado
     estado: varchar('estado', { length: 25 }).notNull().default('PENDIENTE'),
