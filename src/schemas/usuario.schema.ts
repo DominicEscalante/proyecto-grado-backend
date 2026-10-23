@@ -19,6 +19,16 @@ export const cambiarEstadoUsuarioSchema = z.object({
 });
 
 /**
+ * Esquema para restablecimiento administrativo de contraseñas (HU-16)
+ */
+export const restablecerPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'La contrasena debe tener al menos 8 caracteres.')
+    .max(128, 'La contrasena no puede exceder los 128 caracteres.'),
+});
+
+/**
  * Esquema para creacion de nuevos operadores por el administrador (HU-16 - Figura 3.18)
  */
 export const crearOperadorSchema = z.object({

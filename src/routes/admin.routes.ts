@@ -6,6 +6,7 @@ import {
   crearOperadorSchema,
   editarUsuarioSchema,
   cambiarEstadoUsuarioSchema,
+  restablecerPasswordSchema,
 } from '../schemas/usuario.schema.js';
 
 const router = Router();
@@ -57,6 +58,16 @@ router.patch(
   '/usuarios/:id/estado',
   validateBody(cambiarEstadoUsuarioSchema),
   adminController.cambiarEstadoUsuario
+);
+
+/**
+ * PATCH /api/admin/usuarios/:id/password
+ * Restablecimiento administrativo de credenciales de usuario (HU-16).
+ */
+router.patch(
+  '/usuarios/:id/password',
+  validateBody(restablecerPasswordSchema),
+  adminController.restablecerPassword
 );
 
 export default router;

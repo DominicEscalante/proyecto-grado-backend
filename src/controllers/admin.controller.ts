@@ -152,4 +152,34 @@ export const adminController = {
       return next(error);
     }
   },
+
+  /**
+   * PATCH /api/admin/usuarios/:id/password
+   * Restablece la contraseña de acceso de un usuario (HU-16).
+   */
+  async restablecerPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const adminId = req.user?.id;
+      if (!adminId) {
+        throw new AppError('Usuario administrador no autenticado.', 401, 'UNAUTHORIZED');
+      }
+
+      const { id } = req.params;
+      const { password } = req.body;
+      const resultado = await adminService.restablecerPassword(
+        adminId,
+        id,
+        password,
+        req.ip
+      );
+
+      return sendSuccess(res, resultado, 'Contraseña restablecida exitosamente.');
+    } catch (error) {
+      return next(error);
+    }
+  },
 };

@@ -1,5 +1,9 @@
 import { usuarioRepository } from '../repositories/usuario.repository.js';
 import { auth } from '../config/auth.js';
+import { db } from '../db/index.js';
+import { account } from '../db/schema/auth.js';
+import { eq, and } from 'drizzle-orm';
+import { hashPassword } from 'better-auth/crypto';
 import { registrarAuditoria } from './audit.service.js';
 import { AppError } from '../utils/error.util.js';
 import {
@@ -169,5 +173,40 @@ export const adminService = {
     });
 
     return usuarioActualizado;
+  },
+
+  /**
+   * Restablece la contraseña de acceso de un usuario u operador (HU-16).
+   */
+  async restablecerPassword(
+    adminId: string,
+    id: string,
+    nuevaPassword: string,
+    ipOrigen?: string
+  ) {
+    const usuario = await usuarioRepository.buscarUsuarioPorId(id);
+    if (!usuario) {
+      throw new AppError('Usuario no encontrado.', 404, 'USUARIO_NOT_FOUND');
+    }
+
+    const hashedPassword = await hashPassword(nuevaPassword);
+
+    await db
+      .update(account)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(and(eq(account.userId, id), eq(account.providerId, 'credential')));
+
+    await registrarAuditoria({
+      accion: 'PASSWORD_RESET',
+      modulo: 'ADMIN',
+      usuarioId: adminId,
+      ipOrigen,
+      detalles: {
+        usuarioAfectadoId: id,
+        email: usuario.email,
+      },
+    });
+
+    return { mensaje: 'Contrasena restablecida exitosamente.' };
   },
 };
