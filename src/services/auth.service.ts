@@ -1,6 +1,7 @@
 import { auth } from '../config/auth.js';
 import { usuarioRepository } from '../repositories/usuario.repository.js';
 import { registrarAuditoria } from './audit.service.js';
+import { emailService } from './email.service.js';
 import { AppError } from '../utils/error.util.js';
 import { env } from '../config/env.js';
 import {
@@ -86,6 +87,13 @@ export const authService = {
         telefono: dto.telefono,
       },
     });
+
+    // 6. Emision automatica del primer codigo OTP de verificacion al correo registrado
+    try {
+      await authService.solicitarVerificacionIdentidad(authResult.user.id, ipOrigen);
+    } catch (otpError) {
+      console.warn('Advertencia: No se pudo despachar el primer OTP en el registro:', otpError);
+    }
 
     return authResult;
   },
@@ -221,12 +229,20 @@ export const authService = {
     const key = `identidad:${usuario.id}`;
     await usuarioRepository.guardarCodigoVerificacion(key, codigo, expiraEn);
 
+    // Enviar codigo OTP por correo electronico mediante Resend
+    await emailService.enviarCodigoOtpEmail(
+      usuario.email,
+      usuario.nombres || usuario.name,
+      codigo
+    );
+
     await registrarAuditoria({
       accion: 'SOLICITUD_VERIFICACION_IDENTIDAD',
       modulo: 'AUTH',
       usuarioId: usuario.id,
       ipOrigen,
       detalles: {
+        email: usuario.email,
         telefono: usuario.telefono,
       },
     });

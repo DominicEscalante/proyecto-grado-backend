@@ -3,7 +3,14 @@ import { authService } from '../../src/services/auth.service.js';
 import { usuarioRepository } from '../../src/repositories/usuario.repository.js';
 import { auth } from '../../src/config/auth.js';
 import { registrarAuditoria } from '../../src/services/audit.service.js';
+import { emailService } from '../../src/services/email.service.js';
 import { AppError } from '../../src/utils/error.util.js';
+
+vi.mock('../../src/services/email.service.js', () => ({
+  emailService: {
+    enviarCodigoOtpEmail: vi.fn().mockResolvedValue({ success: true }),
+  },
+}));
 
 vi.mock('../../src/repositories/usuario.repository.js', () => ({
   usuarioRepository: {
@@ -57,10 +64,15 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
           id: 'usr-nuevo-1',
           email: 'nuevo@test.com',
           name: 'Roberto Gomez',
+          nombres: 'Roberto',
+          apellidos: 'Gomez',
+          telefono: '71234567',
+          identidadVerificada: false,
         },
         token: 'token-sesion-xyz',
       };
       vi.mocked(auth.api.signUpEmail).mockResolvedValueOnce(mockUserResult as any);
+      vi.mocked(usuarioRepository.buscarUsuarioPorId).mockResolvedValueOnce(mockUserResult.user as any);
 
       const res = await authService.registroCiudadano(validDto, '127.0.0.1');
 
@@ -84,6 +96,11 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
           modulo: 'AUTH',
           usuarioId: 'usr-nuevo-1',
         })
+      );
+      expect(emailService.enviarCodigoOtpEmail).toHaveBeenCalledWith(
+        'nuevo@test.com',
+        'Roberto',
+        expect.stringMatching(/^\d{6}$/)
       );
       expect(res).toEqual(mockUserResult);
     });
@@ -306,6 +323,8 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
     it('debe generar y registrar un codigo OTP de 6 digitos para un usuario no verificado', async () => {
       const mockUsuario = {
         id: 'usr-ciud',
+        email: 'usr@test.com',
+        nombres: 'Juan',
         telefono: '71122334',
         identidadVerificada: false,
       };
@@ -317,6 +336,11 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
         'identidad:usr-ciud',
         expect.stringMatching(/^\d{6}$/),
         expect.any(Date)
+      );
+      expect(emailService.enviarCodigoOtpEmail).toHaveBeenCalledWith(
+        'usr@test.com',
+        'Juan',
+        expect.stringMatching(/^\d{6}$/)
       );
       expect(registrarAuditoria).toHaveBeenCalledWith(
         expect.objectContaining({

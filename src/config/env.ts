@@ -25,6 +25,10 @@ const envSchema = z.object({
 
   UPLOAD_DIR: z.string().default("uploads"),
   MAX_FILE_SIZE_MB: z.coerce.number().default(10),
+
+  // Resend Email Configuration
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("AMPAR <onboarding@resend.dev>"),
 });
 
 const _env = envSchema.safeParse(process.env);
