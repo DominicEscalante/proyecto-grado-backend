@@ -1,27 +1,24 @@
 import multer, { FileFilterCallback } from 'multer';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import { Request } from 'express';
 import { env } from '../config/env.js';
 
-const uploadDirectory = path.resolve(env.UPLOAD_DIR || 'uploads');
+const supabaseConfigured = Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
+const uploadDirectory = path.resolve(env.UPLOAD_DIR);
+if (!supabaseConfigured) fs.mkdirSync(uploadDirectory, { recursive: true });
 
-// Asegurar que el directorio de uploads exista
-if (!fs.existsSync(uploadDirectory)) {
-  fs.mkdirSync(uploadDirectory, { recursive: true });
-}
-
-// Configuración de almacenamiento en disco con nombres aleatorios seguros
-const storage = multer.diskStorage({
-  destination: (_req: Request, _file: Express.Multer.File, cb) => {
-    cb(null, uploadDirectory);
-  },
-  filename: (_req: Request, file: Express.Multer.File, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${crypto.randomUUID()}${ext}`;
-    cb(null, uniqueName);
-  },
-});
+// En Supabase se usa memoria para enviar el buffer directamente al bucket.
+// En desarrollo local se conserva el almacenamiento en disco.
+const storage = supabaseConfigured
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, uploadDirectory),
+      filename: (_req, file, cb) => {
+        const ext = file.originalname.match(/\.[^.]+$/)?.[0].toLowerCase() || '';
+        cb(null, `${crypto.randomUUID()}${ext}`);
+      },
+    });
 
 // Filtro de tipos MIME permitidos
 const fileFilter = (
@@ -49,7 +46,8 @@ const fileFilter = (
   }
 };
 
-const maxFileSize = (env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024;
+// Supabase Free permite archivos de hasta 50 MB.
+const maxFileSize = Math.min(env.MAX_FILE_SIZE_MB, 50) * 1024 * 1024;
 
 export const upload = multer({
   storage,

@@ -15,6 +15,7 @@ import {
   Reporte,
 } from '../types/reporte.types.js';
 import { TipoEmergencia } from '../types/emergencia.types.js';
+import { mediaStorageService } from './media-storage.service.js';
 
 /**
  * Servicio de Dominio para el Módulo Ciudadano.
@@ -141,17 +142,28 @@ export const ciudadanoService = {
       );
     }
 
-    const payloadAdjuntos = files.map((file) => ({
-      tipoArchivo: file.mimetype,
-      urlArchivo: `/uploads/${file.filename}`,
-    }));
+    const uploaded: { tipoArchivo: string; urlArchivo: string; storagePath?: string }[] = [];
+    try {
+      for (const file of files) {
+        const stored = await mediaStorageService.upload(file);
+        uploaded.push({ tipoArchivo: file.mimetype, urlArchivo: stored.url, storagePath: stored.storagePath });
+      }
+    } catch (error) {
+      await mediaStorageService.remove(uploaded.flatMap((file) => file.storagePath ? [file.storagePath] : []));
+      throw error;
+    }
 
-    const adjuntosInsertados = await reporteRepository.insertarAdjuntos(
-      reporte.reporteId,
-      payloadAdjuntos
-    );
+    let adjuntosInsertados: AdjuntoMultimedia[];
+    try {
+      adjuntosInsertados = await reporteRepository.insertarAdjuntos(
+        reporte.reporteId,
+        uploaded.map(({ tipoArchivo, urlArchivo }) => ({ tipoArchivo, urlArchivo }))
+      );
+    } catch (error) {
+      await mediaStorageService.remove(uploaded.flatMap((file) => file.storagePath ? [file.storagePath] : []));
+      throw error;
+    }
 
-    // Registro de auditoría
     await registrarAuditoria({
       accion: 'ADJUNTOS_SUBIDOS',
       modulo: 'CIUDADANO',
@@ -160,7 +172,7 @@ export const ciudadanoService = {
       detalles: {
         codigoTicket,
         cantidadAdjuntos: files.length,
-        archivos: payloadAdjuntos.map((a) => a.urlArchivo),
+        archivos: uploaded.map((a) => a.urlArchivo),
       },
     });
 

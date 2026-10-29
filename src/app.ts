@@ -9,6 +9,7 @@ import { sendSuccess, sendError } from './utils/response.util.js';
 import authRoutes from './routes/auth.routes.js';
 import ciudadanoRoutes from './routes/ciudadano.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import operadorRoutes from './routes/operador.routes.js';
 import { requireAuth } from './middlewares/auth.middleware.js';
 import { requireRoles, ROLES } from './middlewares/role.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
@@ -54,6 +55,14 @@ app.use(
   requireAuth,
   requireRoles(ROLES.ADMINISTRADOR),
   adminRoutes
+);
+
+// Proteccion centralizada de endpoints de operador para Policia, Bomberos y Administracion
+app.use(
+  '/api/operador',
+  requireAuth,
+  requireRoles(ROLES.OPERADOR_POLICIA, ROLES.OPERADOR_BOMBEROS, ROLES.ADMINISTRADOR),
+  operadorRoutes
 );
 
 
