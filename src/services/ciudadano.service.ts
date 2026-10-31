@@ -16,6 +16,8 @@ import {
 } from '../types/reporte.types.js';
 import { TipoEmergencia } from '../types/emergencia.types.js';
 import { mediaStorageService } from './media-storage.service.js';
+import { esReferenciaGps, obtenerDireccionAproximada } from './direccion.service.js';
+import { publishReportEvent } from './report-events.service.js';
 
 /**
  * Servicio de Dominio para el Módulo Ciudadano.
@@ -23,6 +25,19 @@ import { mediaStorageService } from './media-storage.service.js';
  * y auditoría inmutable de eventos.
  */
 export const ciudadanoService = {
+  async buscarCoincidencia(params: { institucion_destino: string; tipo_emergencia_id: number; latitud: number; longitud: number }) {
+    const candidato = await reporteRepository.buscarCoincidencia({
+      institucionDestino: params.institucion_destino,
+      tipoEmergenciaId: params.tipo_emergencia_id,
+      latitud: params.latitud,
+      longitud: params.longitud,
+    });
+    return candidato ? {
+      reporteId: candidato.reporteId,
+      fechaReporte: candidato.fechaGeneracionLocal,
+      distanciaMetros: Math.round(Number(candidato.distanciaMetros)),
+    } : null;
+  },
   /**
    * Obtiene el catálogo de tipos de emergencias disponibles para la selección ciudadana.
    */
@@ -64,6 +79,21 @@ export const ciudadanoService = {
       );
     }
 
+    let estadoIncidente: string | undefined;
+    if (dto.incidente_principal_id) {
+      const candidato = await reporteRepository.buscarCoincidencia({
+        institucionDestino: dto.institucion_destino,
+        tipoEmergenciaId: dto.tipo_emergencia_id,
+        latitud: dto.latitud,
+        longitud: dto.longitud,
+        incidentePrincipalId: dto.incidente_principal_id,
+      });
+      if (!candidato) {
+        throw new AppError('El incidente cercano ya no está disponible. Vuelve a comprobar los reportes próximos.', 409, 'INCIDENTE_NO_DISPONIBLE');
+      }
+      estadoIncidente = candidato.estado;
+    }
+
     // 3. Evaluar límites jurisdiccionales del Municipio de La Paz
     const fueraJurisdiccion = !estaDentroDeLaPaz(dto.latitud, dto.longitud);
 
@@ -76,6 +106,7 @@ export const ciudadanoService = {
       : new Date();
 
     // 6. Persistir en la base de datos con PostGIS SRID 4326
+    const requiereDireccion = esReferenciaGps(dto.referencia_direccion);
     const nuevoReporte = await reporteRepository.crearReporte({
       codigoTicket,
       descripcion: dto.descripcion,
@@ -88,7 +119,17 @@ export const ciudadanoService = {
       fechaGeneracionLocal,
       tipoEmergenciaId: dto.tipo_emergencia_id,
       ciudadanoId,
+      incidentePrincipalId: dto.incidente_principal_id,
+      estadoInicial: estadoIncidente,
     });
+
+    if (requiereDireccion) {
+      void obtenerDireccionAproximada(dto.latitud, dto.longitud).then(async (direccion) => {
+        if (direccion) await reporteRepository.actualizarDireccion(nuevoReporte.reporteId, direccion);
+      }).catch((error) => console.warn('No se pudo resolver la dirección del reporte:', error));
+    }
+
+    void publishReportEvent(dto.institucion_destino).catch((error) => console.error('No se pudo notificar el nuevo reporte:', error));
 
     // 7. Registro de auditoría inmutable
     await registrarAuditoria({
@@ -176,6 +217,7 @@ export const ciudadanoService = {
       },
     });
 
+    void publishReportEvent(reporte.institucionDestino).catch((error) => console.error('No se pudo notificar la evidencia:', error));
     return adjuntosInsertados;
   },
 

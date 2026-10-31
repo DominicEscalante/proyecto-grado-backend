@@ -1,0 +1,1 @@
+ALTER TABLE "reportes" ADD CONSTRAINT "reportes_incidente_principal_fk" FOREIGN KEY ("incidente_principal_id") REFERENCES "public"."reportes"("reporte_id") ON DELETE restrict ON UPDATE no action;

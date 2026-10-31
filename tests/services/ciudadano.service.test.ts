@@ -6,6 +6,11 @@ import * as ticketUtil from '../../src/utils/ticket.util.js';
 import * as auditService from '../../src/services/audit.service.js';
 import { AppError } from '../../src/utils/error.util.js';
 import { CrearReporteDTO } from '../../src/types/reporte.types.js';
+import { mediaStorageService } from '../../src/services/media-storage.service.js';
+
+vi.mock('../../src/services/media-storage.service.js', () => ({
+  mediaStorageService: { upload: vi.fn().mockResolvedValue({ url: '/uploads/foto-1.jpg' }), remove: vi.fn() },
+}));
 
 vi.mock('../../src/repositories/emergencia.repository.js', () => ({
   emergenciaRepository: {
@@ -17,6 +22,7 @@ vi.mock('../../src/repositories/emergencia.repository.js', () => ({
 vi.mock('../../src/repositories/reporte.repository.js', () => ({
   reporteRepository: {
     crearReporte: vi.fn(),
+    buscarCoincidencia: vi.fn(),
     insertarAdjuntos: vi.fn(),
     listarReportesPorCiudadano: vi.fn(),
     buscarReportePorTicket: vi.fn(),
@@ -35,6 +41,7 @@ vi.mock('../../src/services/audit.service.js', () => ({
 describe('Ciudadano Service - Logica de Negocio', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(mediaStorageService.upload).mockResolvedValue({ url: '/uploads/foto-1.jpg' });
   });
 
   describe('obtenerCatalogoEmergencias', () => {
@@ -67,6 +74,34 @@ describe('Ciudadano Service - Logica de Negocio', () => {
       referencia_direccion: 'Calle Comercio esq. Socabaya',
       fecha_generacion_local: new Date('2026-10-10T12:00:00Z'),
     };
+
+    it('rechaza vincular un incidente que ya no coincide', async () => {
+      vi.mocked(emergenciaRepository.buscarTipoEmergenciaPorId).mockResolvedValueOnce({
+        tipoEmergenciaId: 1, nombre: 'Accidente', descripcion: '', institucion: 'POLICIA', activo: true,
+      });
+      vi.mocked(reporteRepository.buscarCoincidencia).mockResolvedValueOnce(null);
+      await expect(ciudadanoService.crearReporte('user-123', { ...validDto, incidente_principal_id: 22 })).rejects.toMatchObject({
+        statusCode: 409, code: 'INCIDENTE_NO_DISPONIBLE',
+      });
+      expect(reporteRepository.crearReporte).not.toHaveBeenCalled();
+    });
+
+    it('crea un ticket propio vinculado al incidente confirmado', async () => {
+      vi.mocked(emergenciaRepository.buscarTipoEmergenciaPorId).mockResolvedValueOnce({
+        tipoEmergenciaId: 1, nombre: 'Accidente', descripcion: '', institucion: 'POLICIA', activo: true,
+      });
+      vi.mocked(reporteRepository.buscarCoincidencia).mockResolvedValueOnce({
+        reporteId: 22, incidentePrincipalId: null, codigoTicket: 'TKT-2026-000022',
+        fechaGeneracionLocal: new Date(), distanciaMetros: 20, estado: 'EN_CURSO',
+      });
+      vi.mocked(ticketUtil.generarCodigoTicket).mockResolvedValueOnce('TKT-2026-000023');
+      vi.mocked(reporteRepository.crearReporte).mockResolvedValueOnce({ codigoTicket: 'TKT-2026-000023' } as never);
+      const result = await ciudadanoService.crearReporte('user-456', { ...validDto, incidente_principal_id: 22 });
+      expect(result.codigoTicket).toBe('TKT-2026-000023');
+      expect(reporteRepository.crearReporte).toHaveBeenCalledWith(expect.objectContaining({
+        incidentePrincipalId: 22, estadoInicial: 'EN_CURSO', ciudadanoId: 'user-456',
+      }));
+    });
 
     it('debe lanzar error 404 si el tipo de emergencia no existe o esta inactivo', async () => {
       vi.mocked(emergenciaRepository.buscarTipoEmergenciaPorId).mockResolvedValueOnce(null);

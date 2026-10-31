@@ -9,6 +9,8 @@ import {
 } from '../types/reporte.types.js';
 
 export interface CrearReporteRepoParams {
+  incidentePrincipalId?: number;
+  estadoInicial?: string;
   codigoTicket: string;
   descripcion: string;
   institucionDestino: string;
@@ -44,6 +46,27 @@ export interface ListarMisReportesRepoResult {
  * protegiendo contra inyeccion SQL y tipando los resultados en tiempo de compilacion.
  */
 export const reporteRepository = {
+  async buscarCoincidencia(params: { institucionDestino: string; tipoEmergenciaId: number; latitud: number; longitud: number; incidentePrincipalId?: number }) {
+    const distancia = sql<number>`ST_Distance(${reportes.geom}::geography, ST_SetSRID(ST_MakePoint(${params.longitud}, ${params.latitud}), 4326)::geography)`;
+    const rows = await db.select({
+      reporteId: sql<number>`COALESCE(${reportes.incidentePrincipalId}, ${reportes.reporteId})`,
+      incidentePrincipalId: reportes.incidentePrincipalId,
+      codigoTicket: reportes.codigoTicket,
+      estado: reportes.estado,
+      fechaGeneracionLocal: reportes.fechaGeneracionLocal,
+      distanciaMetros: distancia,
+    }).from(reportes).where(and(
+      eq(reportes.institucionDestino, params.institucionDestino),
+      eq(reportes.tipoEmergenciaId, params.tipoEmergenciaId),
+      sql`${reportes.estado} IN ('PENDIENTE', 'EN_CURSO')`,
+      sql`${reportes.fechaGeneracionLocal} >= NOW() - INTERVAL '2 hours'`,
+      sql`ST_DWithin(${reportes.geom}::geography, ST_SetSRID(ST_MakePoint(${params.longitud}, ${params.latitud}), 4326)::geography, 100)`,
+      params.incidentePrincipalId
+        ? sql`COALESCE(${reportes.incidentePrincipalId}, ${reportes.reporteId}) = ${params.incidentePrincipalId}`
+        : undefined,
+    )).orderBy(distancia).limit(1);
+    return rows[0] ?? null;
+  },
   /**
    * Inserta un nuevo reporte utilizando Drizzle ORM con expresion espacial PostGIS parametrizada.
    */
@@ -52,6 +75,7 @@ export const reporteRepository = {
       .insert(reportes)
       .values({
         codigoTicket: params.codigoTicket,
+        incidentePrincipalId: params.incidentePrincipalId,
         descripcion: params.descripcion,
         institucionDestino: params.institucionDestino,
         latitud: String(params.latitud),
@@ -60,13 +84,14 @@ export const reporteRepository = {
         geom: sql`ST_SetSRID(ST_MakePoint(${params.longitud}, ${params.latitud}), 4326)`,
         referenciaDireccion: params.referenciaDireccion,
         fueraJurisdiccion: params.fueraJurisdiccion,
-        estado: 'PENDIENTE',
+        estado: params.estadoInicial ?? 'PENDIENTE',
         fechaGeneracionLocal: params.fechaGeneracionLocal,
         tipoEmergenciaId: params.tipoEmergenciaId,
         ciudadanoId: params.ciudadanoId,
       })
       .returning({
         reporteId: reportes.reporteId,
+        incidentePrincipalId: reportes.incidentePrincipalId,
         codigoTicket: reportes.codigoTicket,
         descripcion: reportes.descripcion,
         institucionDestino: reportes.institucionDestino,
@@ -89,6 +114,10 @@ export const reporteRepository = {
       });
 
     return nuevoReporte;
+  },
+
+  async actualizarDireccion(reporteId: number, direccion: string): Promise<void> {
+    await db.update(reportes).set({ referenciaDireccion: direccion }).where(eq(reportes.reporteId, reporteId));
   },
 
   /**

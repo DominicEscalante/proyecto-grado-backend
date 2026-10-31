@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { institucionDestinoEnum } from './emergencia.schema.js';
 
 export const estadoReporteEnum = z.enum(
-  ['PENDIENTE', 'ASIGNADO', 'DESPACHADO', 'ATENDIDO', 'RECHAZADO'],
+  ['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA'],
   {
     errorMap: () => ({ message: 'Estado de reporte no válido.' }),
   }
@@ -13,6 +13,7 @@ export const estadoReporteEnum = z.enum(
  * Soporta sincronización offline mediante `fecha_generacion_local`.
  */
 export const crearReporteSchema = z.object({
+  incidente_principal_id: z.number().int().positive().optional(),
   institucion_destino: institucionDestinoEnum,
   tipo_emergencia_id: z.coerce
     .number({ invalid_type_error: 'El tipo de emergencia debe ser un número entero.' })
@@ -43,6 +44,13 @@ export const crearReporteSchema = z.object({
     .default(() => new Date()),
 });
 
+export const coincidenciasQuerySchema = z.object({
+  institucion_destino: institucionDestinoEnum,
+  tipo_emergencia_id: z.coerce.number().int().positive(),
+  latitud: z.coerce.number().min(-90).max(90),
+  longitud: z.coerce.number().min(-180).max(180),
+});
+
 /**
  * Esquema de parámetros para adjuntar evidencias multimedia a un reporte.
  */
@@ -57,7 +65,7 @@ export const ticketParamSchema = z.object({
  */
 export const misReportesQuerySchema = z.object({
   estado: z
-    .enum(['PENDIENTE', 'ASIGNADO', 'DESPACHADO', 'ATENDIDO', 'RECHAZADO', 'TODOS'])
+    .enum(['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA', 'TODOS'])
     .optional()
     .default('TODOS'),
   institucion: z.enum(['POLICIA', 'BOMBEROS', 'TODOS']).optional().default('TODOS'),

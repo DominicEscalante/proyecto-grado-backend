@@ -9,6 +9,7 @@ import {
   boolean,
   geometry,
   index,
+  foreignKey,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { tiposEmergencias } from './emergencias.js';
@@ -23,6 +24,7 @@ export const reportes = pgTable(
   'reportes',
   {
     reporteId: serial('reporte_id').primaryKey(),
+    incidentePrincipalId: integer('incidente_principal_id'),
     codigoTicket: varchar('codigo_ticket', { length: 20 }).notNull().unique(),
     descripcion: text('descripcion').notNull(),
 
@@ -65,6 +67,8 @@ export const reportes = pgTable(
     index('reportes_ciudadano_idx').on(table.ciudadanoId),
     index('reportes_operador_idx').on(table.operadorId),
     index('reportes_tipo_emergencia_idx').on(table.tipoEmergenciaId),
+    index('reportes_incidente_principal_idx').on(table.incidentePrincipalId),
+    foreignKey({ columns: [table.incidentePrincipalId], foreignColumns: [table.reporteId], name: 'reportes_incidente_principal_fk' }).onDelete('restrict'),
   ]
 );
 

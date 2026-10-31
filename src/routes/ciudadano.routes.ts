@@ -10,10 +10,13 @@ import {
   crearReporteSchema,
   ticketParamSchema,
   misReportesQuerySchema,
+  coincidenciasQuerySchema,
 } from '../schemas/reporte.schema.js';
 import { catalogoEmergenciasQuerySchema } from '../schemas/emergencia.schema.js';
 
 const router = Router();
+
+router.get('/reportes/coincidencias', validateQuery(coincidenciasQuerySchema), ciudadanoController.buscarCoincidencia);
 
 /**
  * GET /api/ciudadano/emergencias

@@ -88,9 +88,19 @@ Desde la carpeta de este repositorio:
    npm run dev
    ```
 
+Este comando reinicia la API al guardar cualquier archivo TypeScript de `src/`, `server.ts` o `.env`. Si ya tenías `npm run dev` abierto antes de actualizar el proyecto, detén ese proceso y vuelve a ejecutarlo para aplicar la nueva configuración.
+
 La API queda en <http://localhost:3000>. Verifica la conexión a PostgreSQL/PostGIS en <http://localhost:3000/api/health>.
 
 Para ejecutar la API y la base de datos dentro de Compose, usa `docker compose up --build`. Esa configuración usa el volumen local `uploads_data`; consulta [Almacenamiento multimedia](#almacenamiento-multimedia) para conectar Supabase en un entorno de despliegue.
+
+Para desarrollar ambos proyectos con reinicio automático al guardar, coloca los repositorios `proyecto-grado-backend` y `proyecto-grado-frontend` como carpetas hermanas y ejecuta desde este repositorio:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+El frontend queda en <http://localhost:5173> y la API en <http://localhost:3000>. Vite actualiza el navegador al cambiar el frontend y `tsx watch` reinicia la API al cambiar el backend. Sin Docker, ejecuta `npm run dev` en cada repositorio para obtener el mismo comportamiento.
 
 ## Configuración
 
@@ -107,12 +117,15 @@ Para ejecutar la API y la base de datos dentro de Compose, usa `docker compose u
 | `BETTER_AUTH_URL` | URL pública de la API usada por Better Auth | `http://localhost:3000` |
 | `UPLOAD_DIR` | Carpeta local para evidencias | `uploads` |
 | `MAX_FILE_SIZE_MB` | Tamaño máximo por archivo | `10` |
+| `GEOCODER_URL` | URL base del servicio Photon para obtener una dirección aproximada a partir del GPS | `https://photon.komoot.io` |
 | `SUPABASE_URL` | URL del proyecto Supabase | Sin definir |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta del backend (`sb_secret_…` o `service_role`) | Sin definir |
 | `SUPABASE_STORAGE_BUCKET` | Bucket de evidencias | `evidencias-reportes` |
 | `RESEND_API_KEY` | Envío de códigos OTP por correo | Sin definir; en desarrollo se registra en consola |
 
 Reemplaza los secretos de desarrollo y configura los orígenes correctos antes de desplegar. No subas `.env` ni claves al repositorio.
+
+Al crear un reporte con GPS, el backend consulta Photon una vez para guardar una dirección aproximada. Si el proveedor no responde, conserva el reporte con «Dirección no disponible»; las coordenadas siguen almacenadas para el mapa. Las referencias antiguas se resuelven al abrir el detalle institucional. Para un despliegue con alto tráfico, configura `GEOCODER_URL` con una instancia propia o un proveedor compatible con la API de Photon.
 
 ## Datos de demostración
 
@@ -146,6 +159,7 @@ Todas las respuestas de la API usan el formato común de éxito o error del back
 
 Rutas principales de reportes:
 
+- `GET /api/ciudadano/reportes/coincidencias?institucion_destino=POLICIA&tipo_emergencia_id=1&latitud=...&longitud=...` consulta un incidente activo del mismo tipo e institución a menos de 100 m y con reportes de las últimas 2 horas.
 - `GET /api/ciudadano/emergencias`
 - `POST /api/ciudadano/reportes`
 - `POST /api/ciudadano/reportes/:ticket/adjuntos`
@@ -153,6 +167,8 @@ Rutas principales de reportes:
 - `GET /api/ciudadano/reportes/:ticket`
 - `GET /api/operador/reportes`
 - `PATCH /api/operador/reportes/:ticket/estado`
+
+El ciudadano puede enviar `incidente_principal_id` al crear un reporte si confirma que corresponde a un incidente cercano. El servidor vuelve a validar la coincidencia y conserva un ticket y evidencias independientes. La respuesta de operador agrupa los tickets confirmados en `reportesVinculados` y `cantidadReportes`; al cambiar el estado de cualquiera de ellos se actualiza todo el grupo.
 
 ## Almacenamiento multimedia
 

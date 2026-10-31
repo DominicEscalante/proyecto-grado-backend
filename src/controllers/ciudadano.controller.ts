@@ -30,6 +30,16 @@ const extraerCiudadanoId = (req: Request): string => {
  * Gestiona el transporte HTTP, extracción de DTOs y formateo de respuestas ApiResponse.
  */
 export const ciudadanoController = {
+  async buscarCoincidencia(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const resultado = await ciudadanoService.buscarCoincidencia(req.query as unknown as {
+        institucion_destino: string; tipo_emergencia_id: number; latitud: number; longitud: number;
+      });
+      return sendSuccess(res, resultado, 'Coincidencia consultada.');
+    } catch (error) {
+      return next(error);
+    }
+  },
   /**
    * GET /api/ciudadano/emergencias
    * Retorna el catálogo de tipos de emergencias para el formulario de reporte.

@@ -15,6 +15,27 @@
       "when": 1791646909301,
       "tag": "0001_crazy_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793327394972,
+      "tag": "0002_watery_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793327647763,
+      "tag": "0003_daily_sleeper",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793327647764,
+      "tag": "0004_unify_report_status",
+      "breakpoints": true
     }
   ]
 }
