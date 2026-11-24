@@ -67,12 +67,11 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
           nombres: 'Roberto',
           apellidos: 'Gomez',
           telefono: '71234567',
-          identidadVerificada: false,
+          identidad_verificada: true,
         },
         token: 'token-sesion-xyz',
       };
       vi.mocked(auth.api.signUpEmail).mockResolvedValueOnce(mockUserResult as any);
-      vi.mocked(usuarioRepository.buscarUsuarioPorId).mockResolvedValueOnce(mockUserResult.user as any);
 
       const res = await authService.registroCiudadano(validDto, '127.0.0.1');
 
@@ -85,7 +84,7 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
             email: 'nuevo@test.com',
             ci: '12345678',
             rol_id: 1,
-            identidad_verificada: false,
+            identidad_verificada: true,
             estado_cuenta: true,
           }),
         })
@@ -97,11 +96,7 @@ describe('Auth Service - HU-01, HU-02, HU-03', () => {
           usuarioId: 'usr-nuevo-1',
         })
       );
-      expect(emailService.enviarCodigoOtpEmail).toHaveBeenCalledWith(
-        'nuevo@test.com',
-        'Roberto',
-        expect.stringMatching(/^\d{6}$/)
-      );
+      expect(emailService.enviarCodigoOtpEmail).not.toHaveBeenCalled();
       expect(res).toEqual(mockUserResult);
     });
 

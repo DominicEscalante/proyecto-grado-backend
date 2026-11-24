@@ -31,6 +31,7 @@ const fileFilter = (
     'image/png',
     'image/webp',
     'image/jpg',
+    'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm',
     'video/mp4',
     'video/quicktime',
   ];
@@ -40,7 +41,7 @@ const fileFilter = (
   } else {
     cb(
       new Error(
-        `Tipo de archivo no permitido: ${file.mimetype}. Formatos válidos: JPEG, PNG, WEBP, MP4.`
+        `Tipo de archivo no permitido: ${file.mimetype}. Formatos válidos: JPEG, PNG, WEBP, MP4, MOV, MP3, M4A, OGG, WAV o WebM de audio.`
       )
     );
   }

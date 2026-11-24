@@ -100,12 +100,6 @@ export const emailService = {
 
       if (response.error) {
         console.error('Error al enviar correo con Resend:', response.error);
-        // En desarrollo local o si el email de prueba es rechazado por el sandbox de Resend,
-        // no bloqueamos el flujo de la aplicacion
-        if (env.NODE_ENV !== 'production') {
-          console.log(`[FALLBACK DEV]: Código OTP para ${destinatario}: ${codigo}`);
-          return { success: true, simulated: true };
-        }
         return { success: false };
       }
 
@@ -113,10 +107,6 @@ export const emailService = {
       return { success: true, id: response.data?.id };
     } catch (error: any) {
       console.error('Excepción al conectar con la API de Resend:', error?.message || error);
-      if (env.NODE_ENV !== 'production') {
-        console.log(`[FALLBACK DEV]: Código OTP para ${destinatario}: ${codigo}`);
-        return { success: true, simulated: true };
-      }
       return { success: false };
     }
   },

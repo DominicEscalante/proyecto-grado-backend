@@ -1,7 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { db } from './db/index.js';
 import { sql } from 'drizzle-orm';
@@ -16,8 +15,6 @@ import { errorHandler } from './middlewares/error.middleware.js';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './config/auth.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app: Application = express();
 
@@ -41,7 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.resolve(env.UPLOAD_DIR)));
 
 // Routes
 app.use('/api/auth', authRoutes);

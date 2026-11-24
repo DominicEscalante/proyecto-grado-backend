@@ -50,3 +50,10 @@ export const verificarIdentidadSchema = z.object({
 export type RegistroCiudadanoDTO = z.infer<typeof registroCiudadanoSchema>;
 export type LoginDTO = z.infer<typeof loginSchema>;
 export type VerificarIdentidadDTO = z.infer<typeof verificarIdentidadSchema>;
+
+export const confirmarRegistroSchema = registroCiudadanoSchema.extend({
+  solicitudId: z.string().uuid(),
+  codigo: verificarIdentidadSchema.shape.codigo,
+});
+
+export type ConfirmarRegistroDTO = z.infer<typeof confirmarRegistroSchema>;

@@ -6,6 +6,7 @@ import { requireAuth } from '../middlewares/auth.middleware.js';
 import { validateBody } from '../middlewares/validate.middleware.js';
 import {
   registroCiudadanoSchema,
+  confirmarRegistroSchema,
   loginSchema,
   verificarIdentidadSchema,
 } from '../schemas/auth.schema.js';
@@ -21,6 +22,12 @@ router.post(
   '/registro',
   validateBody(registroCiudadanoSchema),
   authController.registroCiudadano
+);
+
+router.post(
+  '/registro/confirmar',
+  validateBody(confirmarRegistroSchema),
+  authController.confirmarRegistro
 );
 
 /**

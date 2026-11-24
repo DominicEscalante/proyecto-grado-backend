@@ -1,3 +1,5 @@
+import { verifyPassword } from 'better-auth/crypto';
+import { authorizeBackup } from '../services/backup-authorization.js';
 import { betterAuth } from 'better-auth';
 import { bearer } from 'better-auth/plugins';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
@@ -28,6 +30,23 @@ export const auth = betterAuth({
       rpName: 'AMPAR',
       origin: frontendUrl.origin,
       authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
+      registration: {
+        afterVerification: async ({ ctx, user }) => {
+          const result = await pool.query<{ rol_id: number; password: string | null; enrolled: boolean }>(
+            `SELECT u.rol_id, a.password,
+                    EXISTS (SELECT 1 FROM passkey p WHERE p."userId" = u.id) AS enrolled
+             FROM usuarios u LEFT JOIN account a ON a."userId" = u.id AND a."providerId" = 'credential'
+             WHERE u.id = $1`, [user.id]
+          );
+          const account = result.rows[0];
+          if (account?.rol_id !== 4) return;
+          const password = ctx.headers?.get('x-ampar-enrollment-password');
+          if (account.enrolled || !password || !account.password ||
+              !await verifyPassword({ hash: account.password, password })) {
+            throw new APIError('FORBIDDEN', { message: 'No se pudo autorizar el registro de la clave de acceso.' });
+          }
+        },
+      },
       authentication: {
         afterVerification: async ({ verification }) => {
           if (!verification.authenticationInfo.userVerified) {
@@ -68,6 +87,7 @@ export const auth = betterAuth({
           sessionToken: session.token,
           detalles: { metodo: 'PASSKEY' },
         });
+        if (ctx.headers?.get('x-ampar-backup') === '1') authorizeBackup(session.token, user.id);
       } catch {
         deleteSessionCookie(ctx);
         throw new APIError('SERVICE_UNAVAILABLE', { message: 'No se pudo completar el inicio de sesión.' });

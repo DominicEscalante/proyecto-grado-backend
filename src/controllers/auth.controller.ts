@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
+import { registroOtpService } from '../services/registro-otp.service.js';
 import { authService } from '../services/auth.service.js';
 import { sendSuccess } from '../utils/response.util.js';
-import { RegistroCiudadanoDTO, LoginDTO, VerificarIdentidadDTO } from '../schemas/auth.schema.js';
+import { ConfirmarRegistroDTO, LoginDTO, VerificarIdentidadDTO } from '../schemas/auth.schema.js';
 import { AppError } from '../utils/error.util.js';
 
 /**
@@ -10,7 +11,7 @@ import { AppError } from '../utils/error.util.js';
 export const authController = {
   /**
    * POST /api/auth/registro
-   * Registra un nuevo ciudadano en la plataforma (HU-01).
+   * Envía el código para iniciar un registro ciudadano (HU-01).
    */
   async registroCiudadano(
     req: Request,
@@ -18,8 +19,16 @@ export const authController = {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const dto = req.body as RegistroCiudadanoDTO;
-      const resultado = await authService.registroCiudadano(dto, req.ip);
+      const resultado = await registroOtpService.solicitar(req.body);
+      return sendSuccess(res, resultado, 'Código de registro emitido.');
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async confirmarRegistro(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const resultado = await registroOtpService.confirmar(req.body as ConfirmarRegistroDTO, req.ip);
 
       return sendSuccess(
         res,

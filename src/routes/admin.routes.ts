@@ -1,7 +1,8 @@
+import { consumeBackupAuthorization } from '../services/backup-authorization.js';
 import { Router } from 'express';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { registrosAuditoria, usuarios } from '../db/schema/index.js';
+import { passkey, registrosAuditoria, usuarios } from '../db/schema/index.js';
 import { withDatabaseBackup } from '../services/backup.service.js';
 import { sendSuccess } from '../utils/response.util.js';
 import { AppError } from '../utils/error.util.js';
@@ -46,8 +47,26 @@ router.get('/auditoria', ...requireAdministratorSession, async (req, res, next) 
   }
 });
 
-router.post('/respaldos', ...requireAdministratorSession, async (_req, res, next) => {
+router.get('/respaldos/passkey', ...requireAdministratorSession, async (req, res, next) => {
   try {
+    const credentials = await db.select({ id: passkey.id }).from(passkey)
+      .where(eq(passkey.userId, req.user!.id)).limit(1);
+    res.set('Cache-Control', 'no-store');
+    return sendSuccess(res, { enrolled: credentials.length > 0 }, 'Estado de la clave de acceso.');
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/respaldos', ...requireAdministratorSession, async (req, res, next) => {
+  try {
+    if (!consumeBackupAuthorization(req.body?.proof, req.user!.id)) {
+      throw new AppError('Confirma la descarga con tu clave de acceso.', 403, 'BACKUP_PASSKEY_REQUIRED');
+    }
+    await db.insert(registrosAuditoria).values({
+      accion: 'RESPALDO_AUTORIZADO', modulo: 'ADMIN', usuarioId: req.user!.id,
+      ipOrigen: req.ip ?? req.socket.remoteAddress ?? 'desconocida', detalles: {},
+    });
     await withDatabaseBackup((file, filename) => new Promise<void>((resolve, reject) => {
       if (res.destroyed) {
         resolve();

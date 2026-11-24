@@ -14,10 +14,7 @@ import {
  * Implementa la logica para HU-01 (Registro), HU-02 (Login) y HU-03 (Validacion de Identidad).
  */
 export const authService = {
-  /**
-   * Registra un nuevo ciudadano con datos personales, carnet y celular (HU-01).
-   */
-  async registroCiudadano(dto: RegistroCiudadanoDTO, ipOrigen?: string) {
+  async validarDatosRegistro(dto: RegistroCiudadanoDTO) {
     // 1. Validar unicidad de correo
     const existeEmail = await usuarioRepository.buscarPorEmail(dto.email);
     if (existeEmail) {
@@ -47,6 +44,10 @@ export const authService = {
         'TELEFONO_DUPLICADO'
       );
     }
+  },
+
+  async registroCiudadano(dto: RegistroCiudadanoDTO, ipOrigen?: string) {
+    await authService.validarDatosRegistro(dto);
 
     const nombreCompleto = dto.name || `${dto.nombres} ${dto.apellidos}`;
 
@@ -62,7 +63,7 @@ export const authService = {
         apellidos: dto.apellidos.trim(),
         telefono: dto.telefono.trim(),
         rol_id: 1, // CIUDADANO
-        identidad_verificada: false,
+        identidad_verificada: true,
         estado_cuenta: true,
       } as any,
     });
@@ -87,13 +88,6 @@ export const authService = {
         telefono: dto.telefono,
       },
     });
-
-    // 6. Emision automatica del primer codigo OTP de verificacion al correo registrado
-    try {
-      await authService.solicitarVerificacionIdentidad(authResult.user.id, ipOrigen);
-    } catch (otpError) {
-      console.warn('Advertencia: No se pudo despachar el primer OTP en el registro:', otpError);
-    }
 
     return authResult;
   },

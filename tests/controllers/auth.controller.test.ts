@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { authController } from '../../src/controllers/auth.controller.js';
+import { registroOtpService } from '../../src/services/registro-otp.service.js';
 import { authService } from '../../src/services/auth.service.js';
+
+vi.mock('../../src/services/registro-otp.service.js', () => ({
+  registroOtpService: { solicitar: vi.fn(), confirmar: vi.fn() },
+}));
 
 vi.mock('../../src/services/auth.service.js', () => ({
   authService: {
-    registroCiudadano: vi.fn(),
     login: vi.fn(),
     solicitarVerificacionIdentidad: vi.fn(),
     confirmarVerificacionIdentidad: vi.fn(),
@@ -31,7 +35,7 @@ describe('Auth Controller - HU-01, HU-02, HU-03', () => {
   });
 
   describe('registroCiudadano (HU-01)', () => {
-    it('debe responder 201 con los datos del usuario registrado', async () => {
+    it('debe responder con la solicitud OTP antes de crear la cuenta', async () => {
       req.body = {
         email: 'nuevo@test.com',
         password: 'Password123',
@@ -41,16 +45,13 @@ describe('Auth Controller - HU-01, HU-02, HU-03', () => {
         telefono: '71234567',
       };
 
-      const mockResultado = {
-        user: { id: 'usr-1', email: 'nuevo@test.com' },
-        token: 'token-abc',
-      };
-      vi.mocked(authService.registroCiudadano).mockResolvedValueOnce(mockResultado as any);
+      const mockResultado = { solicitudId: 'solicitud-1' };
+      vi.mocked(registroOtpService.solicitar).mockResolvedValueOnce(mockResultado as any);
 
       await authController.registroCiudadano(req as Request, res as Response, next);
 
-      expect(authService.registroCiudadano).toHaveBeenCalledWith(req.body, '127.0.0.1');
-      expect(res.status).toHaveBeenCalledWith(201);
+      expect(registroOtpService.solicitar).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
@@ -59,9 +60,20 @@ describe('Auth Controller - HU-01, HU-02, HU-03', () => {
       );
     });
 
+    it('debe devolver la sesion al confirmar el codigo', async () => {
+      const resultado = { user: { id: 'usr-1' }, token: 'token-abc' };
+      vi.mocked(registroOtpService.confirmar).mockResolvedValueOnce(resultado as any);
+
+      await authController.confirmarRegistro(req as Request, res as Response, next);
+
+      expect(registroOtpService.confirmar).toHaveBeenCalledWith(req.body, '127.0.0.1');
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ data: resultado }));
+    });
+
     it('debe propagar errores a next() si el servicio falla', async () => {
       const error = new Error('Email duplicado');
-      vi.mocked(authService.registroCiudadano).mockRejectedValueOnce(error);
+      vi.mocked(registroOtpService.solicitar).mockRejectedValueOnce(error);
 
       await authController.registroCiudadano(req as Request, res as Response, next);
 

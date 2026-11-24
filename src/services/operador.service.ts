@@ -154,7 +154,7 @@ export const operadorService = {
           return {
             id: adj.id,
             url,
-            tipo: esVideo ? 'video' : 'image',
+            tipo: adj.tipo.startsWith('audio/') ? 'audio' : esVideo ? 'video' : 'image',
             formato: extension ? extension.toUpperCase() : adj.tipo.split('/')[1]?.toUpperCase() || 'ARCHIVO',
             nombre: `evidencia_${adj.id}.${extension || (esVideo ? 'mp4' : 'jpg')}`,
           };
