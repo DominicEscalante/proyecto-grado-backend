@@ -182,6 +182,16 @@ Para Supabase:
 
 Las URLs públicas permiten ver el archivo a quien las conozca. Usa evidencias sintéticas o de demostración en el proyecto académico. El límite de carga configurado actualmente es 10 MB por archivo y se admiten imágenes y videos definidos por el middleware de carga.
 
+## Passkeys
+
+Aplica las migraciones y configura `CORS_ORIGIN` con el origen exacto del frontend y `BETTER_AUTH_URL` con la URL pública del backend. En producción, usa HTTPS y sirve el frontend y la API bajo el mismo sitio para que funcionen las cookies de WebAuthn. En desarrollo puedes usar `localhost`. Mantén estable el dominio del frontend para que las Passkeys registradas sigan siendo válidas.
+
+## Auditoría y respaldo
+
+Desde **Auditoría**, un administrador con sesión activa puede consultar la bitácora y descargar el respaldo comprimido de PostgreSQL. Aplica las migraciones para activar la protección contra modificación o borrado de la bitácora. En instalaciones fuera de Docker, instala `pg_dump` en el PATH del backend con una versión igual o superior a la del servidor PostgreSQL.
+
+El archivo `.dump` se restaura con `pg_restore` y contiene la base de datos. Los archivos de evidencia que se guardan en disco o Supabase Storage requieren su propia copia.
+
 ## Comandos
 
 | Comando | Descripción |

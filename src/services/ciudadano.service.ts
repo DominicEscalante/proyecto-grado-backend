@@ -113,7 +113,7 @@ export const ciudadanoService = {
       institucionDestino: dto.institucion_destino,
       latitud: dto.latitud,
       longitud: dto.longitud,
-      altitud: dto.altitud || 0,
+      altitud: dto.altitud ?? null,
       referenciaDireccion: dto.referencia_direccion,
       fueraJurisdiccion,
       fechaGeneracionLocal,

@@ -78,6 +78,7 @@ export const passkey = pgTable(
     deviceType: text('deviceType').notNull().default('singleDevice'),
     backedUp: boolean('backedUp').notNull().default(false),
     transports: text('transports'),
+    aaguid: text('aaguid'),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
   },
   (table) => [

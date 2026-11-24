@@ -1,12 +1,16 @@
 # ===================================================
 # Stage 1: Build TypeScript source
 # ===================================================
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
+
+RUN apk add --no-cache postgresql-client
+
+FROM base AS builder
 
 WORKDIR /usr/src/app
 
 # Copy dependency definitions and TypeScript configuration
-COPY package*.json tsconfig.json ./
+COPY package*.json tsconfig.json .npmrc ./
 RUN npm install
 
 # Copy project files and compile to JavaScript
@@ -16,12 +20,12 @@ RUN npm run build
 # ===================================================
 # Stage 2: Production runtime environment
 # ===================================================
-FROM node:20-alpine AS runner
+FROM base AS runner
 
 WORKDIR /usr/src/app
 
 # Copy package manifests and install only production dependencies
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm install --omit=dev
 
 # Copy compiled files from builder stage

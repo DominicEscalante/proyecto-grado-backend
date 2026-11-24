@@ -1,5 +1,7 @@
 import { db } from '../db/index.js';
-import { registrosAuditoria } from '../db/schema/index.js';
+import { eq } from 'drizzle-orm';
+import { registrosAuditoria, session } from '../db/schema/index.js';
+import { AppError } from '../utils/error.util.js';
 
 export interface RegistrarAuditoriaParams {
   accion: string;
@@ -7,6 +9,7 @@ export interface RegistrarAuditoriaParams {
   ipOrigen?: string;
   detalles: Record<string, unknown>;
   usuarioId: string;
+  sessionToken?: string;
 }
 
 /**
@@ -22,7 +25,14 @@ export const registrarAuditoria = async (params: RegistrarAuditoriaParams): Prom
       usuarioId: params.usuarioId,
     });
   } catch (error) {
-    // Si la auditoría falla, registramos en consola para no interrumpir el flujo principal
     console.error('[Audit Service Error]: Fallo al registrar auditoría:', error);
+    if (params.sessionToken) {
+      try {
+        await db.delete(session).where(eq(session.token, params.sessionToken));
+      } catch {
+        console.error('[Audit Service Error]: No se pudo revocar la sesión recién creada.');
+      }
+      throw new AppError('No se pudo completar el inicio de sesión.', 503, 'LOGIN_AUDIT_FAILED');
+    }
   }
 };

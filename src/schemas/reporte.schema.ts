@@ -23,7 +23,9 @@ export const crearReporteSchema = z.object({
     .string({ required_error: 'La descripción o notas adicionales son obligatorias.' })
     .trim()
     .min(5, 'La descripción debe tener al menos 5 caracteres.')
-    .max(2000, 'La descripción no puede exceder los 2000 caracteres.'),
+    .max(2000, 'La descripción no puede exceder los 2000 caracteres.')
+    .refine((value) => !/[^\P{Cc}\t\n\r]|[\u202A-\u202E\u2066-\u2069]/u.test(value),
+      'La descripción contiene caracteres de control no permitidos.'),
   latitud: z.coerce
     .number({ invalid_type_error: 'La latitud GPS es requerida y debe ser numérica.' })
     .min(-90, 'Latitud mínima inválida (-90).')
@@ -32,7 +34,7 @@ export const crearReporteSchema = z.object({
     .number({ invalid_type_error: 'La longitud GPS es requerida y debe ser numérica.' })
     .min(-180, 'Longitud mínima inválida (-180).')
     .max(180, 'Longitud máxima inválida (180).'),
-  altitud: z.coerce.number().optional().default(0),
+  altitud: z.coerce.number().finite().min(-99999.99).max(99999.99).nullable().optional(),
   referencia_direccion: z
     .string({ required_error: 'La referencia de la dirección o calles es obligatoria.' })
     .trim()

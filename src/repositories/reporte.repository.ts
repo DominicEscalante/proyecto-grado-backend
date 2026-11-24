@@ -16,7 +16,7 @@ export interface CrearReporteRepoParams {
   institucionDestino: string;
   latitud: number;
   longitud: number;
-  altitud: number;
+  altitud: number | null;
   referenciaDireccion: string;
   fueraJurisdiccion: boolean;
   fechaGeneracionLocal: Date;
@@ -80,7 +80,7 @@ export const reporteRepository = {
         institucionDestino: params.institucionDestino,
         latitud: String(params.latitud),
         longitud: String(params.longitud),
-        altitud: String(params.altitud),
+        altitud: params.altitud === null ? null : String(params.altitud),
         geom: sql`ST_SetSRID(ST_MakePoint(${params.longitud}, ${params.latitud}), 4326)`,
         referenciaDireccion: params.referenciaDireccion,
         fueraJurisdiccion: params.fueraJurisdiccion,

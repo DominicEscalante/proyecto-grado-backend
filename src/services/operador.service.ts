@@ -141,7 +141,7 @@ export const operadorService = {
         coordenadas: {
           latitud: Number(r.latitud),
           longitud: Number(r.longitud),
-          altitud: Number(r.altitud) || 3640,
+          altitud: r.altitud === null ? null : Number(r.altitud),
           referencia: r.referenciaDireccion || 'La Paz, Bolivia',
         },
         adjuntos: (adjuntosMap.get(r.reporteId) || []).map((adj) => {

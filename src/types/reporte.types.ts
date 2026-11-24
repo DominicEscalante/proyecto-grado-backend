@@ -39,7 +39,7 @@ export interface ReporteDetalleCiudadano {
   institucionDestino: string;
   latitud: string;
   longitud: string;
-  altitud: string;
+  altitud: string | null;
   referenciaDireccion: string;
   fueraJurisdiccion: boolean;
   estado: string;

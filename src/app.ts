@@ -13,6 +13,8 @@ import operadorRoutes from './routes/operador.routes.js';
 import { requireAuth } from './middlewares/auth.middleware.js';
 import { requireRoles, ROLES } from './middlewares/role.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './config/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +33,9 @@ app.use(
     credentials: true,
   })
 );
+
+// WebAuthn verification needs the original request stream.
+app.all('/api/auth/passkey/*', toNodeHandler(auth));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

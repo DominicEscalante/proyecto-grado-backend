@@ -163,6 +163,7 @@ export const authService = {
         modulo: 'AUTH',
         usuarioId: loginResult.user.id,
         ipOrigen,
+        sessionToken: loginResult.token,
         detalles: {
           identificadorUsado: dto.identificador,
           metodo: metodoAcceso,
@@ -171,6 +172,7 @@ export const authService = {
 
       return loginResult;
     } catch (error: any) {
+      if (error instanceof AppError && error.code === 'LOGIN_AUDIT_FAILED') throw error;
       // Si fallo con CI pero existia un usuario alternativo con ese mismo numero de celular, intentar con dicho usuario
       if (usuarioAlternativoPorTelefono && usuarioAlternativoPorTelefono.estadoCuenta) {
         try {
@@ -187,6 +189,7 @@ export const authService = {
               modulo: 'AUTH',
               usuarioId: reintentoResult.user.id,
               ipOrigen,
+              sessionToken: reintentoResult.token,
               detalles: {
                 identificadorUsado: dto.identificador,
                 metodo: 'CELULAR',
@@ -195,7 +198,8 @@ export const authService = {
 
             return reintentoResult;
           }
-        } catch {
+        } catch (error) {
+          if (error instanceof AppError && error.code === 'LOGIN_AUDIT_FAILED') throw error;
           // Si tambien falla, propaga INVALID_CREDENTIALS
         }
       }

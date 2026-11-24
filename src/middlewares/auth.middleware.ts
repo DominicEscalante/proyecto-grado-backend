@@ -58,3 +58,29 @@ export const requireAuth = async (
     });
   }
 };
+
+export const requireVerifiedSession = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const current = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+      query: { disableCookieCache: true },
+    });
+    if (!current?.user) {
+      sendError(res, 'Se requiere una sesión activa.', 401, 'UNAUTHORIZED');
+      return;
+    }
+    if (!current.user.estado_cuenta) {
+      sendError(res, 'Cuenta inactiva o suspendida.', 403, 'ACCOUNT_DISABLED');
+      return;
+    }
+    req.user = current.user;
+    req.session = current.session;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

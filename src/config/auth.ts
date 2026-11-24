@@ -1,7 +1,14 @@
 import { betterAuth } from 'better-auth';
 import { bearer } from 'better-auth/plugins';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { deleteSessionCookie } from 'better-auth/cookies';
+import { passkey } from '@better-auth/passkey';
 import { pool } from './db.js';
 import { env } from './env.js';
+import { registrarAuditoria } from '../services/audit.service.js';
+
+const frontendUrl = new URL(env.CORS_ORIGIN);
+const passkeySignInPath = '/passkey/verify-authentication';
 
 /**
  * Instancia de Better Auth configurada para el sistema de seguridad y autenticación.
@@ -11,10 +18,62 @@ export const auth = betterAuth({
   database: pool,
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: [frontendUrl.origin],
+  disabledPaths: ['/sign-up/email', '/sign-in/email'],
 
   plugins: [
     bearer(),
+    passkey({
+      rpID: frontendUrl.hostname,
+      rpName: 'AMPAR',
+      origin: frontendUrl.origin,
+      authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
+      authentication: {
+        afterVerification: async ({ verification }) => {
+          if (!verification.authenticationInfo.userVerified) {
+            throw new APIError('UNAUTHORIZED', { message: 'Confirma tu identidad en el dispositivo.' });
+          }
+        },
+      },
+    }),
   ],
+
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session, context) => {
+          if (context?.path !== passkeySignInPath) return;
+          const result = await pool.query<{ estado_cuenta: boolean }>(
+            'SELECT estado_cuenta FROM usuarios WHERE id = $1',
+            [session.userId]
+          );
+          if (!result.rows[0]?.estado_cuenta) {
+            throw new APIError('FORBIDDEN', { message: 'La cuenta está inactiva.' });
+          }
+        },
+      },
+    },
+  },
+
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== passkeySignInPath || !ctx.context.newSession) return;
+      const { user, session } = ctx.context.newSession;
+      try {
+        await registrarAuditoria({
+          accion: 'INICIO_SESION',
+          modulo: 'AUTH',
+          usuarioId: user.id,
+          ipOrigen: session.ipAddress ?? undefined,
+          sessionToken: session.token,
+          detalles: { metodo: 'PASSKEY' },
+        });
+      } catch {
+        deleteSessionCookie(ctx);
+        throw new APIError('SERVICE_UNAVAILABLE', { message: 'No se pudo completar el inicio de sesión.' });
+      }
+    }),
+  },
 
   user: {
     modelName: 'usuarios',

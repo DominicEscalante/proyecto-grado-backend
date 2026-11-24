@@ -66,11 +66,8 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 /**
- * Conecta todas las rutas por defecto de Better Auth:
- * - POST /api/auth/sign-up/email
- * - POST /api/auth/sign-in/email
- * - POST /api/auth/sign-out
- * - GET  /api/auth/get-session
+ * El alta y acceso con contraseña pasan por /registro y /login.
+ * Better Auth mantiene las rutas de sesión y cierre de sesión.
  */
 router.all('/*', toNodeHandler(auth));
 

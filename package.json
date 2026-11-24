@@ -31,13 +31,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@better-auth/core": "1.7.7",
+    "@better-auth/passkey": "1.7.7",
+    "@better-auth/utils": "0.4.2",
+    "@better-fetch/fetch": "1.3.2",
     "@supabase/supabase-js": "^2.118.0",
-    "better-auth": "^1.1.0",
+    "better-auth": "1.7.7",
+    "better-call": "1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.45.3",
     "express": "^4.19.2",
     "multer": "^2.4.0",
+    "nanostores": "1.3.0",
     "pg": "^8.12.0",
     "resend": "^6.34.1",
     "zod": "^3.23.8"
@@ -52,6 +58,7 @@
     "rimraf": "^6.0.1",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4",
+    "vite": "^6.4.6",
     "vitest": "^5.0.3"
   }
 }
