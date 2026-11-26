@@ -2,10 +2,6 @@ import { pgTable, serial, varchar, jsonb, timestamp, text, index } from 'drizzle
 import { relations } from 'drizzle-orm';
 import { usuarios } from './usuarios.js';
 
-/**
- * Tabla: Registros de Auditoría Inmutable
- * Almacena trazabilidad completa de acciones críticas (autenticación, cambios de estado, despacho de unidades).
- */
 export const registrosAuditoria = pgTable(
   'registros_auditoria',
   {
@@ -26,7 +22,6 @@ export const registrosAuditoria = pgTable(
   ]
 );
 
-// Relaciones Drizzle
 export const registrosAuditoriaRelations = relations(registrosAuditoria, ({ one }) => ({
   usuario: one(usuarios, {
     fields: [registrosAuditoria.usuarioId],

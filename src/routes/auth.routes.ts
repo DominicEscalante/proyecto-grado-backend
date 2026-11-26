@@ -1,3 +1,4 @@
+import { rateLimit } from 'express-rate-limit';
 import { Router } from 'express';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from '../config/auth.js';
@@ -13,6 +14,10 @@ import {
 import { sendSuccess } from '../utils/response.util.js';
 
 const router = Router();
+const intentosAuth = rateLimit({
+  windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false,
+  message: { success: false, error: { message: 'Demasiados intentos. Inténtalo en 15 minutos.', code: 'RATE_LIMIT' } },
+});
 
 /**
  * POST /api/auth/registro
@@ -20,12 +25,14 @@ const router = Router();
  */
 router.post(
   '/registro',
+  intentosAuth,
   validateBody(registroCiudadanoSchema),
   authController.registroCiudadano
 );
 
 router.post(
   '/registro/confirmar',
+  intentosAuth,
   validateBody(confirmarRegistroSchema),
   authController.confirmarRegistro
 );
@@ -36,6 +43,7 @@ router.post(
  */
 router.post(
   '/login',
+  intentosAuth,
   validateBody(loginSchema),
   authController.login
 );
@@ -46,6 +54,7 @@ router.post(
  */
 router.post(
   '/solicitar-verificacion',
+  intentosAuth,
   requireAuth,
   authController.solicitarVerificacionIdentidad
 );
@@ -56,15 +65,12 @@ router.post(
  */
 router.post(
   '/verificar-identidad',
+  intentosAuth,
   requireAuth,
   validateBody(verificarIdentidadSchema),
   authController.confirmarVerificacionIdentidad
 );
 
-/**
- * GET /api/auth/me
- * Retorna los datos del usuario y la sesion activa.
- */
 router.get('/me', requireAuth, (req, res) => {
   return sendSuccess(res, {
     user: req.user,
@@ -72,10 +78,6 @@ router.get('/me', requireAuth, (req, res) => {
   });
 });
 
-/**
- * El alta y acceso con contraseña pasan por /registro y /login.
- * Better Auth mantiene las rutas de sesión y cierre de sesión.
- */
 router.all('/*', toNodeHandler(auth));
 
 export default router;

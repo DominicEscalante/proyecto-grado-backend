@@ -2,11 +2,6 @@ import { db } from '../db/index.js';
 import { reportes } from '../db/schema/index.js';
 import { like, desc } from 'drizzle-orm';
 
-/**
- * Genera un codigo correlativo univoco de ticket para un nuevo reporte.
- * Formato: TKT-YYYY-NNNNNN (ej. TKT-2026-000001)
- * Utiliza Drizzle ORM con ordenamiento descendente y limite.
- */
 export const generarCodigoTicket = async (): Promise<string> => {
   const anioActual = new Date().getFullYear();
   const prefijo = `TKT-${anioActual}-%`;

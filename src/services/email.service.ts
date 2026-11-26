@@ -3,9 +3,6 @@ import { env } from '../config/env.js';
 
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-/**
- * Plantilla HTML accesible y profesional para la emision de codigos OTP de identidad.
- */
 function buildOtpEmailHtml(nombre: string, codigo: string): string {
   return `
   <!DOCTYPE html>

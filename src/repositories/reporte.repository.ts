@@ -40,11 +40,6 @@ export interface ListarMisReportesRepoResult {
   totalPaginas: number;
 }
 
-/**
- * Repositorio de datos para Reportes de Emergencias.
- * Implementa consultas enteramente construidas con Drizzle ORM,
- * protegiendo contra inyeccion SQL y tipando los resultados en tiempo de compilacion.
- */
 export const reporteRepository = {
   async buscarCoincidencia(params: { institucionDestino: string; tipoEmergenciaId: number; latitud: number; longitud: number; incidentePrincipalId?: number }) {
     const distancia = sql<number>`ST_Distance(${reportes.geom}::geography, ST_SetSRID(ST_MakePoint(${params.longitud}, ${params.latitud}), 4326)::geography)`;
@@ -120,9 +115,6 @@ export const reporteRepository = {
     await db.update(reportes).set({ referenciaDireccion: direccion }).where(eq(reportes.reporteId, reporteId));
   },
 
-  /**
-   * Inserta evidencias multimedia asociadas a un reporte mediante insercion por lotes en Drizzle.
-   */
   async insertarAdjuntos(
     reporteId: number,
     adjuntos: { tipoArchivo: string; urlArchivo: string }[]
@@ -145,9 +137,6 @@ export const reporteRepository = {
     return resultado;
   },
 
-  /**
-   * Obtiene la lista resumida de reportes creados por un ciudadano con paginacion y filtros usando Drizzle.
-   */
   async listarReportesPorCiudadano(
     params: ListarMisReportesRepoParams
   ): Promise<ListarMisReportesRepoResult> {
@@ -164,7 +153,6 @@ export const reporteRepository = {
 
     const whereClause = and(...conditions);
 
-    // 1. Obtencion de conteo total
     const totalResult = await db
       .select({ total: count() })
       .from(reportes)
@@ -172,7 +160,6 @@ export const reporteRepository = {
 
     const total = totalResult[0]?.total ?? 0;
 
-    // 2. Consulta de elementos paginados con innerJoin y leftJoin
     const rows = await db
       .select({
         reporteId: reportes.reporteId,
@@ -233,9 +220,6 @@ export const reporteRepository = {
     };
   },
 
-  /**
-   * Obtiene el detalle completo de un reporte por ticket mediante Drizzle ORM.
-   */
   async buscarReportePorTicket(
     codigoTicket: string,
     ciudadanoId?: string
@@ -286,7 +270,6 @@ export const reporteRepository = {
 
     const row = rows[0];
 
-    // Consultar adjuntos asociados usando Drizzle
     const adjuntos = await db
       .select()
       .from(adjuntosMultimedia)
@@ -323,9 +306,6 @@ export const reporteRepository = {
     return detalle;
   },
 
-  /**
-   * Busca un reporte por su identificador numerico interno mediante Drizzle.
-   */
   async buscarReportePorId(reporteId: number): Promise<Reporte | null> {
     const rows = await db
       .select()

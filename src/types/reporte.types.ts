@@ -10,9 +10,6 @@ import {
 export type { Reporte, NewReporte, AdjuntoMultimedia, NewAdjuntoMultimedia };
 export type { CrearReporteDTO, TicketParamDTO, MisReportesQueryDTO, EstadoReporte };
 
-/**
- * Resumen de reporte para la lista del ciudadano (Mis Reportes)
- */
 export interface ReporteItemCiudadano {
   reporteId: number;
   codigoTicket: string;
@@ -29,9 +26,6 @@ export interface ReporteItemCiudadano {
   primerAdjuntoUrl: string | null;
 }
 
-/**
- * Detalle completo de un reporte para seguimiento en la PWA
- */
 export interface ReporteDetalleCiudadano {
   reporteId: number;
   codigoTicket: string;

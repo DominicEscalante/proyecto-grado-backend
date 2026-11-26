@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { institucionDestinoEnum } from './emergencia.schema.js';
 
+const numericInput = z.union([z.number(), z.string().trim().min(1)]);
+
 export const estadoReporteEnum = z.enum(
   ['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA'],
   {
@@ -8,10 +10,6 @@ export const estadoReporteEnum = z.enum(
   }
 );
 
-/**
- * Esquema de validación para la creación de un nuevo reporte ciudadano.
- * Soporta sincronización offline mediante `fecha_generacion_local`.
- */
 export const crearReporteSchema = z.object({
   incidente_principal_id: z.number().int().positive().optional(),
   institucion_destino: institucionDestinoEnum,
@@ -26,22 +24,22 @@ export const crearReporteSchema = z.object({
     .max(2000, 'La descripción no puede exceder los 2000 caracteres.')
     .refine((value) => !/[^\P{Cc}\t\n\r]|[\u202A-\u202E\u2066-\u2069]/u.test(value),
       'La descripción contiene caracteres de control no permitidos.'),
-  latitud: z.coerce
+  latitud: numericInput.pipe(z.coerce
     .number({ invalid_type_error: 'La latitud GPS es requerida y debe ser numérica.' })
     .min(-90, 'Latitud mínima inválida (-90).')
-    .max(90, 'Latitud máxima inválida (90).'),
-  longitud: z.coerce
+    .max(90, 'Latitud máxima inválida (90).')),
+  longitud: numericInput.pipe(z.coerce
     .number({ invalid_type_error: 'La longitud GPS es requerida y debe ser numérica.' })
     .min(-180, 'Longitud mínima inválida (-180).')
-    .max(180, 'Longitud máxima inválida (180).'),
-  altitud: z.coerce.number().finite().min(-99999.99).max(99999.99).nullable().optional(),
+    .max(180, 'Longitud máxima inválida (180).')),
+  altitud: numericInput.pipe(z.coerce.number().finite().min(-99999.99).max(99999.99)).nullable().optional(),
   referencia_direccion: z
     .string({ required_error: 'La referencia de la dirección o calles es obligatoria.' })
     .trim()
     .min(3, 'La referencia de la dirección debe tener al menos 3 caracteres.')
     .max(500, 'La referencia de dirección no puede exceder los 500 caracteres.'),
   fecha_generacion_local: z.coerce
-    .date()
+    .date().refine(date => date.getTime() <= Date.now() + 300_000, 'Fecha de reporte futura no válida.')
     .optional()
     .default(() => new Date()),
 });
@@ -49,22 +47,16 @@ export const crearReporteSchema = z.object({
 export const coincidenciasQuerySchema = z.object({
   institucion_destino: institucionDestinoEnum,
   tipo_emergencia_id: z.coerce.number().int().positive(),
-  latitud: z.coerce.number().min(-90).max(90),
-  longitud: z.coerce.number().min(-180).max(180),
+  latitud: numericInput.pipe(z.coerce.number().min(-90).max(90)),
+  longitud: numericInput.pipe(z.coerce.number().min(-180).max(180)),
 });
 
-/**
- * Esquema de parámetros para adjuntar evidencias multimedia a un reporte.
- */
 export const ticketParamSchema = z.object({
   ticket: z
     .string({ required_error: 'El código de ticket es obligatorio.' })
     .regex(/^TKT-\d{4}-\d{6}$/, 'Formato de ticket inválido (ej. TKT-2026-000001).'),
 });
 
-/**
- * Esquema para filtrar los reportes en el historial del ciudadano.
- */
 export const misReportesQuerySchema = z.object({
   estado: z
     .enum(['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA', 'TODOS'])

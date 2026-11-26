@@ -9,13 +9,13 @@ import { eq, or } from "drizzle-orm";
  * 1. Roles Base (RBAC)
  * 2. Catálogo de Tipos de Emergencias
  * 3. 8 Usuarios Oficiales (3 Ciudadanos, 2 Policías, 2 Bomberos, 1 Administrador)
- *    Contraseña común para todos: Pa$$w0rd
+ *    Contraseña común para todos: Demo-AMPAR-local-2026
  */
 const seed = async () => {
+  if (process.env.NODE_ENV === 'production') throw new Error('Las cuentas de demostración solo se crean fuera de producción.');
   try {
     console.log("Iniciando carga de datos iniciales...");
 
-    // 1. Roles Base
     console.log("  -> Insertando Roles Base (RBAC)...");
     await db
       .insert(roles)
@@ -43,7 +43,6 @@ const seed = async () => {
       ])
       .onConflictDoNothing({ target: roles.nombre });
 
-    // 2. Tipos de Emergencias
     console.log("  -> Insertando Catálogo de Tipos de Emergencias...");
     await db
       .insert(tiposEmergencias)
@@ -114,17 +113,15 @@ const seed = async () => {
       ])
       .onConflictDoNothing({ target: tiposEmergencias.nombre });
 
-    // 3. Usuarios solicitados: 3 Ciudadanos, 2 Policias, 2 Bomberos, 1 Administrador
     console.log("  -> Registrando usuarios de prueba con contraseñas en Better Auth...");
 
-    // Limpiar usuarios de prueba anteriores
     await db.delete(usuarios).where(or(eq(usuarios.email, 'admin@test.com'), eq(usuarios.id, 'usr-dev-admin')));
 
     const usuariosSeed = [
       // 3 Ciudadanos (@gmail.com)
       {
         email: "usuario1@gmail.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Juan Perez",
         ci: "usuario1",
         nombres: "Juan",
@@ -136,7 +133,7 @@ const seed = async () => {
       },
       {
         email: "usuario2@gmail.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Maria Quispe",
         ci: "usuario2",
         nombres: "Maria",
@@ -148,7 +145,7 @@ const seed = async () => {
       },
       {
         email: "usuario3@gmail.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Carlos Condori",
         ci: "usuario3",
         nombres: "Carlos",
@@ -161,7 +158,7 @@ const seed = async () => {
       // 2 Policias (@pol.com)
       {
         email: "pol1@pol.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Pedro Mamani",
         ci: "pol1",
         nombres: "Pedro",
@@ -173,7 +170,7 @@ const seed = async () => {
       },
       {
         email: "pol2@pol.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Lucia Flores",
         ci: "pol2",
         nombres: "Lucia",
@@ -186,7 +183,7 @@ const seed = async () => {
       // 2 Bomberos (@bom.com)
       {
         email: "bom1@bom.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Marco Silva",
         ci: "bom1",
         nombres: "Marco",
@@ -198,7 +195,7 @@ const seed = async () => {
       },
       {
         email: "bom2@bom.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Ana Gomez",
         ci: "bom2",
         nombres: "Ana",
@@ -211,7 +208,7 @@ const seed = async () => {
       // 1 Administrador (@admin.com)
       {
         email: "admin@admin.com",
-        password: "Pa$$w0rd",
+        password: "Demo-AMPAR-local-2026",
         name: "Admin Sistema",
         ci: "admin",
         nombres: "Administrador",
@@ -231,7 +228,6 @@ const seed = async () => {
         .limit(1);
 
       if (existing.length === 0) {
-        // Crear usuario y credenciales a traves del API de Better Auth
         const authResult = await auth.api.signUpEmail({
           body: {
             email: u.email,
@@ -265,7 +261,6 @@ const seed = async () => {
           console.log(`     Usuario creado: ${u.ci} (${u.email}) - Rol: ${u.rolId}`);
         }
       } else {
-        // Asegurar que los datos de rol, email y estado esten sincronizados
         await db
           .update(usuarios)
           .set({

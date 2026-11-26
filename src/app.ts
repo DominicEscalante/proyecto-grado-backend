@@ -17,12 +17,17 @@ import { auth } from './config/auth.js';
 
 
 const app: Application = express();
+app.disable('x-powered-by');
+app.use((_req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Referrer-Policy', 'same-origin');
+  next();
+});
 
-// Global Middlewares
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin === env.CORS_ORIGIN) {
+      if (!origin || env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || origin === env.CORS_ORIGIN) {
         return callback(null, true);
       }
       return callback(null, env.CORS_ORIGIN);
@@ -31,19 +36,15 @@ app.use(
   })
 );
 
-// WebAuthn verification needs the original request stream.
 app.all('/api/auth/passkey/*', toNodeHandler(auth));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static uploads
 app.use('/uploads', express.static(path.resolve(env.UPLOAD_DIR)));
 
-// Routes
 app.use('/api/auth', authRoutes);
 
-// Proteccion centralizada de endpoints de ciudadano por autenticacion y rol CIUDADANO
 app.use(
   '/api/ciudadano',
   requireAuth,
@@ -51,7 +52,6 @@ app.use(
   ciudadanoRoutes
 );
 
-// Proteccion centralizada de endpoints de administracion por autenticacion y rol ADMINISTRADOR
 app.use(
   '/api/admin',
   requireAuth,
@@ -59,7 +59,6 @@ app.use(
   adminRoutes
 );
 
-// Proteccion centralizada de endpoints de operador para Policia, Bomberos y Administracion
 app.use(
   '/api/operador',
   requireAuth,
@@ -68,7 +67,6 @@ app.use(
 );
 
 
-// Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
     const dbRes = await db.execute(
@@ -104,7 +102,6 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   }
 });
 
-// Global Error Handler
 app.use(errorHandler);
 
 export default app;

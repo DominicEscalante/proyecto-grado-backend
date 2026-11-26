@@ -8,23 +8,14 @@ import {
   Usuario,
 } from '../types/usuario.types.js';
 
-/**
- * Repositorio de datos para Usuarios, Cuentas y Verificaciones.
- * Implementa consultas 100% tipadas mediante Drizzle ORM sin SQL crudo.
- */
 export const usuarioRepository = {
-  /**
-   * Obtiene la lista paginada de usuarios (ciudadanos y operadores) con filtros avanzados.
-   */
   async listarUsuarios(params: ListarUsuariosQueryDTO): Promise<ListarUsuariosResultado> {
     const conditions = [];
 
-    // Filtro por rol
     if (params.rol_id) {
       conditions.push(eq(usuarios.rolId, params.rol_id));
     }
 
-    // Filtro por institucion (POLICIA, BOMBEROS o NINGUNA para ciudadanos)
     if (params.institucion && params.institucion !== 'TODOS') {
       if (params.institucion === 'NINGUNA') {
         conditions.push(isNull(usuarios.institucion));
@@ -33,13 +24,11 @@ export const usuarioRepository = {
       }
     }
 
-    // Filtro por estado de cuenta
     if (params.estado_cuenta && params.estado_cuenta !== 'TODOS') {
       const estadoBool = params.estado_cuenta === 'true';
       conditions.push(eq(usuarios.estadoCuenta, estadoBool));
     }
 
-    // Filtro de busqueda libre por texto
     if (params.busqueda && params.busqueda.trim() !== '') {
       const termino = `%${params.busqueda.trim()}%`;
       conditions.push(
@@ -59,7 +48,6 @@ export const usuarioRepository = {
     const pagina = params.pagina || 1;
     const offset = (pagina - 1) * limite;
 
-    // 1. Conteo total con Drizzle
     const totalResult = await db
       .select({ total: count() })
       .from(usuarios)
@@ -67,7 +55,6 @@ export const usuarioRepository = {
 
     const total = totalResult[0]?.total ?? 0;
 
-    // 2. Consulta paginada con relacion a roles
     const rows = await db
       .select({
         id: usuarios.id,
@@ -130,9 +117,6 @@ export const usuarioRepository = {
     };
   },
 
-  /**
-   * Busca los datos de un usuario por su identificador primario con rol asociado.
-   */
   async buscarUsuarioPorId(id: string): Promise<UsuarioItemAdmin | null> {
     const rows = await db
       .select({
@@ -190,9 +174,6 @@ export const usuarioRepository = {
     };
   },
 
-  /**
-   * Busca un usuario por su direccion de correo electronico.
-   */
   async buscarPorEmail(email: string): Promise<Usuario | null> {
     const rows = await db
       .select()
@@ -203,9 +184,6 @@ export const usuarioRepository = {
     return rows[0] || null;
   },
 
-  /**
-   * Busca un usuario por su numero de celular.
-   */
   async buscarPorTelefono(telefono: string): Promise<Usuario | null> {
     const rows = await db
       .select()
@@ -216,10 +194,6 @@ export const usuarioRepository = {
     return rows[0] || null;
   },
 
-  /**
-  /**
-   * Busca un usuario por su cedula de identidad o identificador/alias simple.
-   */
   async buscarPorCi(ci: string): Promise<Usuario | null> {
     const ciTrim = ci.trim();
     const ciNorm = ciTrim.replace(/\s+/g, '').toLowerCase();
@@ -239,9 +213,6 @@ export const usuarioRepository = {
     return rows[0] || null;
   },
 
-  /**
-   * Actualiza atributos de un usuario en la base de datos.
-   */
   async actualizarUsuario(
     id: string,
     datos: Partial<typeof usuarios.$inferInsert>
@@ -274,15 +245,11 @@ export const usuarioRepository = {
     return this.actualizarUsuario(id, { identidadVerificada: verificada });
   },
 
-  /**
-   * Guarda o actualiza un codigo de verificacion temporal en la tabla verification.
-   */
   async guardarCodigoVerificacion(
     identifier: string,
     codigo: string,
     expiraEn: Date
   ): Promise<void> {
-    // Elimina codigos previos para el mismo identificador
     await db.delete(verification).where(eq(verification.identifier, identifier));
 
     await db.insert(verification).values({
@@ -292,9 +259,6 @@ export const usuarioRepository = {
     });
   },
 
-  /**
-   * Obtiene el codigo de verificacion activo para un identificador.
-   */
   async obtenerCodigoVerificacion(
     identifier: string
   ): Promise<{ value: string; expiresAt: Date } | null> {
@@ -310,9 +274,6 @@ export const usuarioRepository = {
     return rows[0] || null;
   },
 
-  /**
-   * Elimina el codigo de verificacion una vez consumido exitosamente.
-   */
   async eliminarCodigoVerificacion(identifier: string): Promise<void> {
     await db.delete(verification).where(eq(verification.identifier, identifier));
   },

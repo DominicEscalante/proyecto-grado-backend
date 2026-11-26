@@ -1,4 +1,5 @@
 import { consumeBackupAuthorization } from '../services/backup-authorization.js';
+import { z } from 'zod';
 import { Router } from 'express';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
@@ -9,7 +10,7 @@ import { AppError } from '../utils/error.util.js';
 import { requireVerifiedSession } from '../middlewares/auth.middleware.js';
 import { requireRoles, ROLES } from '../middlewares/role.middleware.js';
 import { adminController } from '../controllers/admin.controller.js';
-import { validateQuery, validateBody } from '../middlewares/validate.middleware.js';
+import { validateQuery, validateBody, validateParams } from '../middlewares/validate.middleware.js';
 import {
   listarUsuariosQuerySchema,
   crearOperadorSchema,
@@ -19,6 +20,7 @@ import {
 } from '../schemas/usuario.schema.js';
 
 const router = Router();
+const validateUserId = validateParams(z.object({ id: z.string().min(1).max(128).regex(/^[a-zA-Z0-9_-]+$/) }));
 
 const requireAdministratorSession = [requireVerifiedSession, requireRoles(ROLES.ADMINISTRADOR)];
 
@@ -99,6 +101,7 @@ router.get(
  */
 router.get(
   '/usuarios/:id',
+  validateUserId,
   adminController.obtenerUsuarioPorId
 );
 
@@ -118,6 +121,7 @@ router.post(
  */
 router.patch(
   '/usuarios/:id',
+  validateUserId,
   validateBody(editarUsuarioSchema),
   adminController.editarUsuario
 );
@@ -128,6 +132,7 @@ router.patch(
  */
 router.patch(
   '/usuarios/:id/estado',
+  validateUserId,
   validateBody(cambiarEstadoUsuarioSchema),
   adminController.cambiarEstadoUsuario
 );
@@ -138,6 +143,7 @@ router.patch(
  */
 router.patch(
   '/usuarios/:id/password',
+  validateUserId,
   validateBody(restablecerPasswordSchema),
   adminController.restablecerPassword
 );

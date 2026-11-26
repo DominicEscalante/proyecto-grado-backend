@@ -57,9 +57,6 @@ export const testDbConnection = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Cierra ordenadamente el pool de conexiones (Graceful Shutdown).
- */
 export const closeDbConnection = async (): Promise<void> => {
   try {
     await pool.end();

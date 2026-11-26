@@ -131,7 +131,7 @@ Al crear un reporte con GPS, el backend consulta Photon una vez para guardar una
 
 ### Usuarios y catálogo
 
-`npm run db:seed` crea o sincroniza roles, tipos de emergencia y cuentas de demostración. La contraseña compartida por esas cuentas es `Pa$$w0rd`; úsala únicamente en un entorno local de prueba.
+`npm run db:seed` crea o sincroniza roles, tipos de emergencia y cuentas de demostración. La contraseña compartida por esas cuentas es `Demo-AMPAR-local-2026`; úsala únicamente en un entorno local de prueba.
 
 ### Reportes sintéticos diarios
 

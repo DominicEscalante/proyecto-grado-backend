@@ -12,9 +12,6 @@ export interface RegistrarAuditoriaParams {
   sessionToken?: string;
 }
 
-/**
- * Servicio para el registro inmutable de auditoría y trazabilidad.
- */
 export const registrarAuditoria = async (params: RegistrarAuditoriaParams): Promise<void> => {
   try {
     await db.insert(registrosAuditoria).values({

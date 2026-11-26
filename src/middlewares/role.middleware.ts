@@ -10,10 +10,6 @@ export const ROLES = {
 
 export type RolId = (typeof ROLES)[keyof typeof ROLES];
 
-/**
- * Middleware para autorización basada en roles (RBAC).
- * Verifica si el rol del usuario autenticado coincide con los permitidos.
- */
 export const requireRoles = (...allowedRoles: RolId[]) => {
   return (req: Request, res: Response, next: NextFunction): Response | void => {
     if (!req.user) {

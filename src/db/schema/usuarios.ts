@@ -5,21 +5,15 @@ import { account, session, passkey } from './auth.js';
 import { reportes } from './reportes.js';
 import { registrosAuditoria } from './auditoria.js';
 
-/**
- * Tabla de Usuarios (Ciudadanos, Operadores Policiales/Bomberos, Administradores)
- * Integra atributos de Better Auth con datos de identidad ciudadana e institucional.
- */
 export const usuarios = pgTable(
   'usuarios',
   {
-    // Identificador principal (String/UUID requerido por Better Auth para seguridad contra enumeración)
     id: text('id')
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     // Correlativo entero para numeración y soporte legado del modelo
     usuarioId: serial('usuario_id').unique(),
 
-    // Atributos base compatibles con Better Auth
     name: text('name').notNull(),
     email: text('email').notNull().unique(),
     emailVerified: boolean('email_verified').notNull().default(false),
@@ -27,7 +21,6 @@ export const usuarios = pgTable(
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 
-    // Atributos de Identidad y Dominio
     ci: varchar('ci', { length: 15 }).notNull(),
     complemento: varchar('complemento', { length: 5 }),
     nombres: varchar('nombres', { length: 100 }).notNull(),
@@ -38,7 +31,6 @@ export const usuarios = pgTable(
     identidadVerificada: boolean('identidad_verificada').notNull().default(false),
     estadoCuenta: boolean('estado_cuenta').notNull().default(true),
 
-    // Rol RBAC
     rolId: integer('rol_id')
       .notNull()
       .references(() => roles.rolId, { onDelete: 'restrict' }),
@@ -49,7 +41,6 @@ export const usuarios = pgTable(
   ]
 );
 
-// Relaciones Drizzle
 export const usuariosRelations = relations(usuarios, ({ one, many }) => ({
   rol: one(roles, {
     fields: [usuarios.rolId],

@@ -1,8 +1,4 @@
-/**
- * Utilidades para verificación geoespacial y geocercas.
- */
 
-// Bounding box perimetral aproximado del área urbana y distritos del Municipio de La Paz
 export const LA_PAZ_BOUNDS = {
   MIN_LAT: -16.65,
   MAX_LAT: -16.35,
@@ -10,10 +6,6 @@ export const LA_PAZ_BOUNDS = {
   MAX_LNG: -67.95,
 } as const;
 
-/**
- * Verifica si un par de coordenadas (latitud, longitud) se encuentra
- * dentro de los límites de la jurisdicción del Municipio de La Paz.
- */
 export const estaDentroDeLaPaz = (latitud: number, longitud: number): boolean => {
   return (
     latitud >= LA_PAZ_BOUNDS.MIN_LAT &&

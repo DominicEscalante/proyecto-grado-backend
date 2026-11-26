@@ -1,23 +1,21 @@
+import { nuevaPasswordSchema } from './password.schema.js';
 import { z } from 'zod';
 
 /**
  * Esquema de validacion para registro de ciudadanos (HU-01)
  */
 export const registroCiudadanoSchema = z.object({
-  email: z.string().trim().email('Formato de correo electronico invalido.'),
-  password: z
-    .string()
-    .min(8, 'La contrasena debe tener al menos 8 caracteres.')
-    .max(128, 'La contrasena no puede exceder los 128 caracteres.'),
-  name: z.string().trim().min(3, 'El nombre completo debe tener al menos 3 caracteres.').optional(),
+  email: z.string().trim().email('Formato de correo electronico invalido.').max(254),
+  password: nuevaPasswordSchema,
+  name: z.string().trim().max(201).min(3, 'El nombre completo debe tener al menos 3 caracteres.').optional(),
   ci: z
     .string()
     .trim()
     .min(5, 'El CI debe tener al menos 5 caracteres.')
-    .max(15, 'El CI no puede exceder los 15 caracteres.'),
-  complemento: z.string().trim().max(5, 'El complemento no puede exceder 5 caracteres.').optional(),
-  nombres: z.string().trim().min(2, 'Los nombres deben tener al menos 2 caracteres.'),
-  apellidos: z.string().trim().min(2, 'Los apellidos deben tener al menos 2 caracteres.'),
+    .max(15, 'El CI no puede exceder los 15 caracteres.').regex(/^\d+$/, 'El CI debe contener solo dígitos.'),
+  complemento: z.string().trim().regex(/^[A-Za-z0-9]*$/, 'Complemento inválido.').max(5, 'El complemento no puede exceder 5 caracteres.').optional(),
+  nombres: z.string().trim().min(2, 'Los nombres deben tener al menos 2 caracteres.').max(100).regex(/^[\p{L}\p{M}]+(?:[ .'’-]+[\p{L}\p{M}]+)*$/u, 'Usa letras en nombres y apellidos.'),
+  apellidos: z.string().trim().min(2, 'Los apellidos deben tener al menos 2 caracteres.').max(100).regex(/^[\p{L}\p{M}]+(?:[ .'’-]+[\p{L}\p{M}]+)*$/u, 'Usa letras en nombres y apellidos.'),
   telefono: z
     .string()
     .trim()
@@ -32,8 +30,8 @@ export const loginSchema = z.object({
   identificador: z
     .string({ required_error: 'El correo electronico, CI o numero de celular es requerido.' })
     .trim()
-    .min(3, 'El identificador debe tener al menos 3 caracteres.'),
-  password: z.string().min(1, 'La contrasena es requerida.'),
+    .max(254).min(3, 'El identificador debe tener al menos 3 caracteres.'),
+  password: z.string().max(128).min(1, 'La contrasena es requerida.'),
 });
 
 /**

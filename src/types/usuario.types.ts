@@ -18,9 +18,6 @@ export type {
 };
 
 
-/**
- * Representacion estructurada de un usuario para el panel de administracion
- */
 export interface UsuarioItemAdmin {
   id: string;
   usuarioId: number;
@@ -44,9 +41,6 @@ export interface UsuarioItemAdmin {
   };
 }
 
-/**
- * Resultado paginado del listado de usuarios para el panel de administracion
- */
 export interface ListarUsuariosResultado {
   items: UsuarioItemAdmin[];
   total: number;

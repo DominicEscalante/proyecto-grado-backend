@@ -1,6 +1,3 @@
-/**
- * Clase personalizada para errores operacionales y de dominio de la aplicación.
- */
 export class AppError extends Error {
   public statusCode: number;
   public code: string;

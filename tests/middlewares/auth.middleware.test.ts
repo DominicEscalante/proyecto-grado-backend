@@ -111,22 +111,11 @@ describe('Auth Middleware (requireAuth)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('debe autenticar directamente en desarrollo si se provee el header x-dev-user-id sin llamar a getSession', async () => {
-    req.headers = {
-      'x-dev-user-id': 'usr-dev-ciudadano',
-      'x-dev-rol-id': '1',
-    };
-
+  it('exige sesión aunque el cliente envíe encabezados de identidad', async () => {
+    req.headers = { 'x-dev-user-id': 'prueba' };
+    vi.mocked(auth.api.getSession).mockResolvedValueOnce(null as any);
     await requireAuth(req, res, next);
-
-    expect(auth.api.getSession).not.toHaveBeenCalled();
-    expect(req.user).toMatchObject({
-      id: 'usr-dev-ciudadano',
-      rol_id: 1,
-      estado_cuenta: true,
-    });
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(res.status).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
   });
 });
-

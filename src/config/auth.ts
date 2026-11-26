@@ -12,16 +12,12 @@ import { registrarAuditoria } from '../services/audit.service.js';
 const frontendUrl = new URL(env.CORS_ORIGIN);
 const passkeySignInPath = '/passkey/verify-authentication';
 
-/**
- * Instancia de Better Auth configurada para el sistema de seguridad y autenticación.
- * Conectada al pool de PostgreSQL y mapeada a la tabla `usuarios` y entidades del dominio.
- */
 export const auth = betterAuth({
   database: pool,
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [frontendUrl.origin],
-  disabledPaths: ['/sign-up/email', '/sign-in/email'],
+  disabledPaths: ['/sign-up/email', '/sign-in/email', '/update-user'],
 
   plugins: [
     bearer(),
@@ -151,14 +147,14 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 días de duración de sesión
     updateAge: 60 * 60 * 24,      // Refresco cada 24 horas
     cookieCache: {
-      enabled: true,
+      enabled: false,
       maxAge: 5 * 60,             // Cache de cookie por 5 minutos para optimizar lecturas
     },
   },
 
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: 8,
+    minPasswordLength: 15,
     maxPasswordLength: 128,
     autoSignIn: true,
   },

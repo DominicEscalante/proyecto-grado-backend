@@ -28,10 +28,8 @@ export const reportes = pgTable(
     codigoTicket: varchar('codigo_ticket', { length: 20 }).notNull().unique(),
     descripcion: text('descripcion').notNull(),
 
-    // Institución de destino seleccionada por el ciudadano: 'POLICIA' | 'BOMBEROS'
     institucionDestino: varchar('institucion_destino', { length: 20 }).notNull().default('POLICIA'),
 
-    // Coordenadas Geoespaciales
     latitud: numeric('latitud', { precision: 10, scale: 7 }).notNull(),
     longitud: numeric('longitud', { precision: 10, scale: 7 }).notNull(),
     altitud: numeric('altitud', { precision: 7, scale: 2 }),
@@ -39,22 +37,18 @@ export const reportes = pgTable(
     referenciaDireccion: text('referencia_direccion').notNull(),
     fueraJurisdiccion: boolean('fuera_jurisdiccion').notNull().default(false),
 
-    // Ciclo de vida y Estado
     estado: varchar('estado', { length: 25 }).notNull().default('PENDIENTE'),
     fechaGeneracionLocal: timestamp('fecha_generacion_local').notNull().defaultNow(),
     actualizadoEn: timestamp('actualizado_en').notNull().defaultNow(),
 
-    // Clasificación de la Emergencia
     tipoEmergenciaId: integer('tipo_emergencia_id')
       .notNull()
       .references(() => tiposEmergencias.tipoEmergenciaId, { onDelete: 'restrict' }),
 
-    // Datos de Cierre y Atención
     resultadoAtencion: varchar('resultado_atencion', { length: 20 }),
     motivoNoAtencion: text('motivo_no_atencion'),
     fechaAtencion: timestamp('fecha_atencion'),
 
-    // Actores Involucrados (Vinculados a usuarios.id de Better Auth)
     ciudadanoId: text('ciudadano_id')
       .notNull()
       .references(() => usuarios.id, { onDelete: 'restrict' }),
@@ -72,9 +66,6 @@ export const reportes = pgTable(
   ]
 );
 
-/**
- * Tabla: Adjuntos Multimedia (Evidencias fotográficas / videos del reporte)
- */
 export const adjuntosMultimedia = pgTable(
   'adjuntos_multimedia',
   {
@@ -91,7 +82,6 @@ export const adjuntosMultimedia = pgTable(
   ]
 );
 
-// Relaciones Drizzle
 export const reportesRelations = relations(reportes, ({ one, many }) => ({
   tipoEmergencia: one(tiposEmergencias, {
     fields: [reportes.tipoEmergenciaId],

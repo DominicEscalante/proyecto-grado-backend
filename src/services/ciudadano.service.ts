@@ -19,11 +19,6 @@ import { mediaStorageService } from './media-storage.service.js';
 import { esReferenciaGps, obtenerDireccionAproximada } from './direccion.service.js';
 import { publishReportEvent } from './report-events.service.js';
 
-/**
- * Servicio de Dominio para el Módulo Ciudadano.
- * Maneja la lógica de negocio, validaciones de jurisdicción, generación de tickets
- * y auditoría inmutable de eventos.
- */
 export const ciudadanoService = {
   async buscarCoincidencia(params: { institucion_destino: string; tipo_emergencia_id: number; latitud: number; longitud: number }) {
     const candidato = await reporteRepository.buscarCoincidencia({
@@ -38,23 +33,15 @@ export const ciudadanoService = {
       distanciaMetros: Math.round(Number(candidato.distanciaMetros)),
     } : null;
   },
-  /**
-   * Obtiene el catálogo de tipos de emergencias disponibles para la selección ciudadana.
-   */
   async obtenerCatalogoEmergencias(institucion?: string): Promise<TipoEmergencia[]> {
     return emergenciaRepository.listarTiposEmergencias(institucion, true);
   },
 
-  /**
-   * Procesa la creación de un nuevo reporte de emergencia ciudadana.
-   * Valida institución, tipo de emergencia, geocerca municipal y sincronización offline.
-   */
   async crearReporte(
     ciudadanoId: string,
     dto: CrearReporteDTO,
     ipOrigen?: string
   ): Promise<Reporte & { geojson: string }> {
-    // 1. Validar existencia y vigencia del tipo de emergencia
     const tipoEmergencia = await emergenciaRepository.buscarTipoEmergenciaPorId(
       dto.tipo_emergencia_id
     );
@@ -94,13 +81,10 @@ export const ciudadanoService = {
       estadoIncidente = candidato.estado;
     }
 
-    // 3. Evaluar límites jurisdiccionales del Municipio de La Paz
     const fueraJurisdiccion = !estaDentroDeLaPaz(dto.latitud, dto.longitud);
 
-    // 4. Generar código unívoco correlativo de ticket
     const codigoTicket = await generarCodigoTicket();
 
-    // 5. Soporte para fecha de generación offline o tiempo actual
     const fechaGeneracionLocal = dto.fecha_generacion_local
       ? new Date(dto.fecha_generacion_local)
       : new Date();
@@ -131,7 +115,6 @@ export const ciudadanoService = {
 
     void publishReportEvent(dto.institucion_destino).catch((error) => console.error('No se pudo notificar el nuevo reporte:', error));
 
-    // 7. Registro de auditoría inmutable
     await registrarAuditoria({
       accion: 'REPORTE_CREADO',
       modulo: 'CIUDADANO',
@@ -152,9 +135,6 @@ export const ciudadanoService = {
     return nuevoReporte;
   },
 
-  /**
-   * Adjunta evidencias fotográficas o de video a un reporte existente.
-   */
   async adjuntarEvidencias(
     codigoTicket: string,
     ciudadanoId: string,
@@ -169,7 +149,6 @@ export const ciudadanoService = {
       );
     }
 
-    // Verificar que el reporte pertenezca al ciudadano autenticado
     const reporte = await reporteRepository.buscarReportePorTicket(
       codigoTicket,
       ciudadanoId
@@ -221,9 +200,6 @@ export const ciudadanoService = {
     return adjuntosInsertados;
   },
 
-  /**
-   * Lista los reportes generados por el ciudadano autenticado.
-   */
   async listarMisReportes(
     ciudadanoId: string,
     query: MisReportesQueryDTO
@@ -237,9 +213,6 @@ export const ciudadanoService = {
     });
   },
 
-  /**
-   * Obtiene la información detallada de un reporte por ticket para el ciudadano.
-   */
   async obtenerDetalleReporte(
     codigoTicket: string,
     ciudadanoId: string

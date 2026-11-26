@@ -15,7 +15,6 @@ import {
  */
 export const authService = {
   async validarDatosRegistro(dto: RegistroCiudadanoDTO) {
-    // 1. Validar unicidad de correo
     const existeEmail = await usuarioRepository.buscarPorEmail(dto.email);
     if (existeEmail) {
       throw new AppError(
@@ -25,7 +24,6 @@ export const authService = {
       );
     }
 
-    // 2. Validar unicidad de CI
     const existeCi = await usuarioRepository.buscarPorCi(dto.ci);
     if (existeCi) {
       throw new AppError(
@@ -35,7 +33,6 @@ export const authService = {
       );
     }
 
-    // 3. Validar unicidad de telefono celular
     const existeTelefono = await usuarioRepository.buscarPorTelefono(dto.telefono);
     if (existeTelefono) {
       throw new AppError(
@@ -51,7 +48,6 @@ export const authService = {
 
     const nombreCompleto = dto.name || `${dto.nombres} ${dto.apellidos}`;
 
-    // 4. Crear usuario mediante Better Auth
     const authResult = await auth.api.signUpEmail({
       body: {
         email: dto.email.toLowerCase().trim(),
@@ -76,7 +72,6 @@ export const authService = {
       );
     }
 
-    // 5. Registro inmutable de auditoria
     await registrarAuditoria({
       accion: 'REGISTRO_CIUDADANO',
       modulo: 'AUTH',
@@ -105,7 +100,6 @@ export const authService = {
       emailFinal = idTrim.toLowerCase();
       metodoAcceso = 'EMAIL';
     } else {
-      // 1. Buscar candidato por Carnet de Identidad (CI) y/o por Celular
       const usuarioPorCi = await usuarioRepository.buscarPorCi(idTrim);
       const usuarioPorTelefono = /^[67]\d{7}$/.test(idTrim)
         ? await usuarioRepository.buscarPorTelefono(idTrim)
@@ -118,7 +112,6 @@ export const authService = {
       if (usuarioPorCi) {
         emailFinal = usuarioPorCi.email;
         metodoAcceso = 'CI';
-        // Guardar referencia por si el identificador coincidia con un telefono diferente
         if (usuarioPorTelefono && usuarioPorTelefono.id !== usuarioPorCi.id) {
           usuarioAlternativoPorTelefono = usuarioPorTelefono;
         }
@@ -128,7 +121,6 @@ export const authService = {
       }
     }
 
-    // Verificar si la cuenta esta habilitada
     const usuario = await usuarioRepository.buscarPorEmail(emailFinal);
     if (usuario && !usuario.estadoCuenta) {
       throw new AppError(
@@ -138,7 +130,6 @@ export const authService = {
       );
     }
 
-    // Autenticar con Better Auth
     try {
       const loginResult = await auth.api.signInEmail({
         body: {
@@ -151,7 +142,6 @@ export const authService = {
         throw new AppError('Credenciales invalidas.', 401, 'INVALID_CREDENTIALS');
       }
 
-      // Registro de auditoria
       await registrarAuditoria({
         accion: 'INICIO_SESION',
         modulo: 'AUTH',
@@ -220,14 +210,12 @@ export const authService = {
       );
     }
 
-    // Generar codigo numerico de 6 digitos
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
     const expiraEn = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     const key = `identidad:${usuario.id}`;
     await usuarioRepository.guardarCodigoVerificacion(key, codigo, expiraEn);
 
-    // Enviar codigo OTP por correo electronico mediante Resend
     await emailService.enviarCodigoOtpEmail(
       usuario.email,
       usuario.nombres || usuario.name,
@@ -294,16 +282,13 @@ export const authService = {
       );
     }
 
-    // Marcar usuario como verificado
     const usuarioActualizado = await usuarioRepository.marcarIdentidadVerificada(
       usuario.id,
       true
     );
 
-    // Eliminar codigo ya utilizado
     await usuarioRepository.eliminarCodigoVerificacion(key);
 
-    // Auditoria
     await registrarAuditoria({
       accion: 'IDENTIDAD_VERIFICADA',
       modulo: 'AUTH',

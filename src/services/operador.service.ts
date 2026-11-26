@@ -91,7 +91,6 @@ export const operadorService = {
     const operadores = operadorIds.length ? await db.select({ id: usuarios.id, nombre: usuarios.name }).from(usuarios).where(inArray(usuarios.id, operadorIds)) : [];
     const nombresOperadores = new Map(operadores.map((operador) => [operador.id, operador.nombre]));
 
-    // Adjuntos multimedia asociados
     const adjuntosMap = new Map<number, { id: number; url: string; tipo: string }[]>();
     if (reporteIds.length > 0) {
       const adjuntos = await db
@@ -202,9 +201,6 @@ export const operadorService = {
     };
   },
 
-  /**
-   * Actualiza el estado operativo de un reporte desde la consola institucional.
-   */
   async actualizarEstado(codigoTicket: string, nuevoEstado: string, estadoEsperado: string, operadorId: string, institucionOperador?: string, ipOrigen = '127.0.0.1') {
     if (!['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA'].includes(nuevoEstado) ||
         !['PENDIENTE', 'EN_CURSO', 'ATENDIDO', 'FALSA_ALARMA'].includes(estadoEsperado)) {

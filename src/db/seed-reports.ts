@@ -10,7 +10,6 @@ const REPORTS_PER_DAY = 50;
 const DAY_MS = 86_400_000;
 const TIME_ZONE = 'America/La_Paz';
 
-// Anchors aproximados de sectores urbanos para la simulación.
 const SECTORS = [
   ['Achachicala', -16.4730, -68.1438],
   ['Villa Fátima', -16.4778, -68.1212],

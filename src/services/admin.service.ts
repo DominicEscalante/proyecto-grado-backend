@@ -43,7 +43,6 @@ export const adminService = {
    * Registra un nuevo operador institucional (Policia o Bomberos) por parte del administrador (HU-16).
    */
   async crearOperador(adminId: string, dto: CrearOperadorDTO, ipOrigen?: string) {
-    // Validar unicidad
     const existeEmail = await usuarioRepository.buscarPorEmail(dto.email);
     if (existeEmail) {
       throw new AppError('El correo electronico ya se encuentra registrado.', 400, 'EMAIL_DUPLICADO');
@@ -61,7 +60,6 @@ export const adminService = {
 
     const nombreCompleto = `${dto.nombres} ${dto.apellidos}`;
 
-    // Crear operador mediante Better Auth
     const authResult = await auth.api.signUpEmail({
       body: {
         email: dto.email.toLowerCase().trim(),
@@ -84,7 +82,6 @@ export const adminService = {
       throw new AppError('Error al crear la cuenta del operador.', 500, 'CREATION_FAILED');
     }
 
-    // Auditoria
     await registrarAuditoria({
       accion: 'OPERADOR_CREADO',
       modulo: 'ADMIN',
@@ -122,11 +119,9 @@ export const adminService = {
     if (dto.institucion) updateData.institucion = dto.institucion;
     if (dto.rango) updateData.rango = dto.rango.trim();
     if (dto.rol_id !== undefined) updateData.rolId = dto.rol_id;
-    if (dto.estado_cuenta !== undefined) updateData.estadoCuenta = dto.estado_cuenta;
 
     const usuarioActualizado = await usuarioRepository.actualizarUsuario(id, updateData);
 
-    // Auditoria
     await registrarAuditoria({
       accion: 'USUARIO_MODIFICADO',
       modulo: 'ADMIN',
@@ -158,7 +153,6 @@ export const adminService = {
 
     const usuarioActualizado = await usuarioRepository.cambiarEstadoCuenta(id, estado);
 
-    // Auditoria inmutable
     await registrarAuditoria({
       accion: estado ? 'USUARIO_REACTIVADO' : 'USUARIO_DESACTIVADO',
       modulo: 'ADMIN',

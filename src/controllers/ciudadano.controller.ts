@@ -8,9 +8,6 @@ import {
   MisReportesQueryDTO,
 } from '../types/reporte.types.js';
 
-/**
- * Obtiene el identificador del ciudadano autenticado o utiliza el usuario dev en entorno local/Postman.
- */
 const extraerCiudadanoId = (req: Request): string => {
   if (req.user?.id) {
     return req.user.id;
@@ -25,10 +22,6 @@ const extraerCiudadanoId = (req: Request): string => {
   throw new AppError('Usuario no autenticado.', 401, 'UNAUTHORIZED');
 };
 
-/**
- * Controlador HTTP para el Módulo de Ciudadanos.
- * Gestiona el transporte HTTP, extracción de DTOs y formateo de respuestas ApiResponse.
- */
 export const ciudadanoController = {
   async buscarCoincidencia(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
@@ -40,10 +33,6 @@ export const ciudadanoController = {
       return next(error);
     }
   },
-  /**
-   * GET /api/ciudadano/emergencias
-   * Retorna el catálogo de tipos de emergencias para el formulario de reporte.
-   */
   async obtenerCatalogoEmergencias(
     req: Request,
     res: Response,
@@ -63,10 +52,6 @@ export const ciudadanoController = {
     }
   },
 
-  /**
-   * POST /api/ciudadano/reportes
-   * Crea un nuevo reporte de emergencia ciudadana y asigna ticket correlativo.
-   */
   async crearReporte(
     req: Request,
     res: Response,
@@ -94,10 +79,6 @@ export const ciudadanoController = {
     }
   },
 
-  /**
-   * POST /api/ciudadano/reportes/:ticket/adjuntos
-   * Sube y vincula evidencias multimedia (fotos o videos) a un reporte existente.
-   */
   async adjuntarEvidencias(
     req: Request,
     res: Response,
@@ -127,10 +108,6 @@ export const ciudadanoController = {
     }
   },
 
-  /**
-   * GET /api/ciudadano/reportes
-   * Retorna el historial paginado de reportes creados por el ciudadano autenticado.
-   */
   async listarMisReportes(
     req: Request,
     res: Response,
@@ -155,10 +132,6 @@ export const ciudadanoController = {
     }
   },
 
-  /**
-   * GET /api/ciudadano/reportes/:ticket
-   * Retorna el detalle completo de un reporte específico para seguimiento en la PWA.
-   */
   async obtenerDetalleReporte(
     req: Request,
     res: Response,

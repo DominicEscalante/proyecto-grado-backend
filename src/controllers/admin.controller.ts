@@ -14,10 +14,6 @@ import { AppError } from '../utils/error.util.js';
  * Gestiona el transporte HTTP, extraccion de DTOs y formateo de respuestas ApiResponse.
  */
 export const adminController = {
-  /**
-   * GET /api/admin/usuarios
-   * Retorna el listado paginado de usuarios (ciudadanos y operadores) con filtros avanzados.
-   */
   async listarUsuarios(
     req: Request,
     res: Response,
@@ -37,10 +33,6 @@ export const adminController = {
     }
   },
 
-  /**
-   * GET /api/admin/usuarios/:id
-   * Retorna el detalle completo de un usuario por su identificador.
-   */
   async obtenerUsuarioPorId(
     req: Request,
     res: Response,

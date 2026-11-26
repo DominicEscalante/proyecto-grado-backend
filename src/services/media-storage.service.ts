@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import path from 'path';
+import { extensions } from '../utils/media-types.js';
 import { env } from '../config/env.js';
 
 const supabase = env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY
@@ -16,7 +16,7 @@ export const mediaStorageService = {
       return { url: `/uploads/${file.filename}` };
     }
 
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = extensions[file.mimetype];
     const objectPath = `${crypto.randomUUID()}${ext}`;
     const { error } = await supabase.storage
       .from(env.SUPABASE_STORAGE_BUCKET)

@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodTypeAny, ZodError } from 'zod';
 import { sendError } from '../utils/response.util.js';
 
 type RequestLocation = 'body' | 'query' | 'params';
 
-/**
- * Middleware de orden superior para validar entradas HTTP contra esquemas de Zod.
- */
-export const validate = (schema: AnyZodObject, location: RequestLocation = 'body') => {
+export const validate = (schema: ZodTypeAny, location: RequestLocation = 'body') => {
   return async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     try {
       const validated = await schema.parseAsync(req[location]);
@@ -31,6 +28,6 @@ export const validate = (schema: AnyZodObject, location: RequestLocation = 'body
   };
 };
 
-export const validateBody = (schema: AnyZodObject) => validate(schema, 'body');
-export const validateQuery = (schema: AnyZodObject) => validate(schema, 'query');
-export const validateParams = (schema: AnyZodObject) => validate(schema, 'params');
+export const validateBody = (schema: ZodTypeAny) => validate(schema, 'body');
+export const validateQuery = (schema: ZodTypeAny) => validate(schema, 'query');
+export const validateParams = (schema: ZodTypeAny) => validate(schema, 'params');

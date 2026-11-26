@@ -26,17 +26,18 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default("uploads"),
   MAX_FILE_SIZE_MB: z.coerce.number().default(10),
 
-  // Supabase Storage (optional; local disk is used when these are not configured)
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_STORAGE_BUCKET: z.string().default("evidencias-reportes"),
 
-  // Resend Email Configuration
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("AMPAR <onboarding@resend.dev>"),
 });
 
-const _env = envSchema.safeParse(process.env);
+const _env = envSchema.refine(config => config.NODE_ENV !== 'production' ||
+  (config.BETTER_AUTH_SECRET.length >= 32 && config.BETTER_AUTH_SECRET !== 'supersecretbetterauthkey_change_in_production_32chars'),
+  { message: 'Configura un secreto propio de al menos 32 caracteres para producción.', path: ['BETTER_AUTH_SECRET'] }
+).safeParse(process.env);
 
 if (!_env.success) {
   console.error(

@@ -2,10 +2,6 @@ import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/p
 import { relations } from 'drizzle-orm';
 import { usuarios } from './usuarios.js';
 
-/**
- * Tabla: account (Better Auth)
- * Credenciales de usuario (contraseñas hasheadas y proveedores OAuth)
- */
 export const account = pgTable(
   'account',
   {
@@ -32,10 +28,6 @@ export const account = pgTable(
   ]
 );
 
-/**
- * Tabla: session (Better Auth)
- * Sesiones de usuario activas con tokens y metadatos del cliente
- */
 export const session = pgTable(
   'session',
   {
@@ -58,10 +50,6 @@ export const session = pgTable(
   ]
 );
 
-/**
- * Tabla: passkey (Better Auth Plugin WebAuthn)
- * Credenciales FIDO2/Passkey para autenticación biométrica en la PWA móvil
- */
 export const passkey = pgTable(
   'passkey',
   {
@@ -87,10 +75,6 @@ export const passkey = pgTable(
   ]
 );
 
-/**
- * Tabla: verification (Better Auth)
- * Tokens de verificación temporal (OTP, email verification, password reset)
- */
 export const verification = pgTable(
   'verification',
   {
@@ -108,7 +92,6 @@ export const verification = pgTable(
   ]
 );
 
-// Relaciones Drizzle
 export const accountRelations = relations(account, ({ one }) => ({
   usuario: one(usuarios, {
     fields: [account.userId],

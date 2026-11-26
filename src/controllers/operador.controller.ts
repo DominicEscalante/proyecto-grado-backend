@@ -14,10 +14,6 @@ export const operadorController = {
       return next(error);
     }
   },
-  /**
-   * GET /api/operador/reportes
-   * Retorna los reportes e incidentes para la consola de monitoreo institucional.
-   */
   async listarReportes(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { institucion: filtroSolicitado, estado } = req.query as {
@@ -56,10 +52,6 @@ export const operadorController = {
     }
   },
 
-  /**
-   * PATCH /api/operador/reportes/:ticket/estado
-   * Actualiza el estado operativo de un reporte desde la consola.
-   */
   async actualizarEstado(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { ticket } = req.params;
