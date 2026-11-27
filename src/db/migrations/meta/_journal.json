@@ -57,6 +57,13 @@
       "when": 1793327647767,
       "tag": "0007_nullable_report_altitude",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793327647768,
+      "tag": "0008_operator_initial_password",
+      "breakpoints": true
     }
   ]
 }

@@ -28,13 +28,16 @@ export const auth = betterAuth({
       authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
       registration: {
         afterVerification: async ({ ctx, user }) => {
-          const result = await pool.query<{ rol_id: number; password: string | null; enrolled: boolean }>(
-            `SELECT u.rol_id, a.password,
+          const result = await pool.query<{ rol_id: number; cambio_password_pendiente: boolean; password: string | null; enrolled: boolean }>(
+            `SELECT u.rol_id, u.cambio_password_pendiente, a.password,
                     EXISTS (SELECT 1 FROM passkey p WHERE p."userId" = u.id) AS enrolled
              FROM usuarios u LEFT JOIN account a ON a."userId" = u.id AND a."providerId" = 'credential'
              WHERE u.id = $1`, [user.id]
           );
           const account = result.rows[0];
+          if (account?.cambio_password_pendiente) {
+            throw new APIError('FORBIDDEN', { message: 'Cambia tu contraseña temporal primero.' });
+          }
           if (account?.rol_id !== 4) return;
           const password = ctx.headers?.get('x-ampar-enrollment-password');
           if (account.enrolled || !password || !account.password ||
@@ -54,6 +57,13 @@ export const auth = betterAuth({
   ],
 
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => ({
+          data: { ...user, cambio_password_pendiente: user.rol_id === 2 || user.rol_id === 3 },
+        }),
+      },
+    },
     session: {
       create: {
         before: async (session, context) => {
@@ -129,6 +139,12 @@ export const auth = betterAuth({
         type: 'boolean',
         required: false,
         defaultValue: false,
+      },
+      cambio_password_pendiente: {
+        type: 'boolean',
+        required: false,
+        defaultValue: false,
+        input: false,
       },
       estado_cuenta: {
         type: 'boolean',

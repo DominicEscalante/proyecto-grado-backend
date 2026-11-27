@@ -3,7 +3,7 @@ import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../config/auth.js';
 import { sendError } from '../utils/response.util.js';
 
-export const requireAuth = async (
+const requireActiveSession = (allowPendingPassword: boolean) => async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -21,6 +21,9 @@ export const requireAuth = async (
       return sendError(res, 'Cuenta inactiva o suspendida. Contacte al administrador.', 403, 'ACCOUNT_DISABLED');
     }
 
+    if (sessionData.user.cambio_password_pendiente && !allowPendingPassword) {
+      return sendError(res, 'Cambia tu contraseña temporal primero.', 403, 'PASSWORD_CHANGE_REQUIRED');
+    }
     req.user = sessionData.user;
     req.session = sessionData.session;
 
@@ -31,6 +34,9 @@ export const requireAuth = async (
     });
   }
 };
+
+export const requireAuth = requireActiveSession(false);
+export const requirePasswordSetupSession = requireActiveSession(true);
 
 export const requireVerifiedSession = async (
   req: Request,

@@ -29,6 +29,7 @@ export const usuarios = pgTable(
     institucion: varchar('institucion', { length: 20 }), // 'POLICIA', 'BOMBEROS', null para ciudadanos
     rango: varchar('rango', { length: 50 }),             // Rango institucional (operadores)
     identidadVerificada: boolean('identidad_verificada').notNull().default(false),
+    cambioPasswordPendiente: boolean('cambio_password_pendiente').notNull().default(false),
     estadoCuenta: boolean('estado_cuenta').notNull().default(true),
 
     rolId: integer('rol_id')

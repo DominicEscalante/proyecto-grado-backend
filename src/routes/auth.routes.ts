@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from '../config/auth.js';
 import { authController } from '../controllers/auth.controller.js';
-import { requireAuth } from '../middlewares/auth.middleware.js';
+import { requireAuth, requirePasswordSetupSession } from '../middlewares/auth.middleware.js';
 import { validateBody } from '../middlewares/validate.middleware.js';
 import {
   registroCiudadanoSchema,
@@ -11,6 +11,9 @@ import {
   loginSchema,
   verificarIdentidadSchema,
 } from '../schemas/auth.schema.js';
+import { z } from 'zod';
+import { nuevaPasswordSchema } from '../schemas/password.schema.js';
+import { changeInitialPassword } from '../services/initial-password.service.js';
 import { sendSuccess } from '../utils/response.util.js';
 
 const router = Router();
@@ -71,7 +74,21 @@ router.post(
   authController.confirmarVerificacionIdentidad
 );
 
-router.get('/me', requireAuth, (req, res) => {
+router.post('/password-inicial', intentosAuth, requirePasswordSetupSession, validateBody(z.object({
+  actual: z.string().min(1).max(128),
+  nueva: nuevaPasswordSchema,
+}).refine(({ actual, nueva }) => actual !== nueva, {
+  path: ['nueva'], message: 'Elige una contraseña diferente a la temporal.',
+})), async (req, res, next) => {
+  try {
+    await changeInitialPassword(req.user!.id, req.body.actual, req.body.nueva);
+    return sendSuccess(res, null, 'Contraseña actualizada. Inicia sesión de nuevo.');
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/me', requirePasswordSetupSession, (req, res) => {
   return sendSuccess(res, {
     user: req.user,
     session: req.session,
